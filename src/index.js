@@ -1,9 +1,8 @@
-// Crux — headless, unstyled, accessible UI primitives for Alpine.js.
+// Crux UI — headless, unstyled, accessible UI primitives for Alpine.js.
 // https://github.com/jasonbaciulis/crux-ui
-//
-// v0.0.1 is a name-claiming placeholder. Primitives land here as they're
-// built.
+
+import collapsible from './collapsible.js'
 
 export default function Crux(Alpine) {
-  Alpine.magic('crux', () => ({ version: '0.0.1' }));
+  collapsible(Alpine)
 }
