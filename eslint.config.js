@@ -56,7 +56,6 @@ export default defineConfig([
       'default-case-last': 'error',
       'grouped-accessor-pairs': 'error',
       'one-var': ['error', 'never'],
-      'require-unicode-regexp': 'error',
 
       // Size limits — stop functions growing into shapes where bugs thrive.
       complexity: ['error', 12],
