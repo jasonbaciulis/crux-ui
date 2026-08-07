@@ -2,22 +2,16 @@ import Alpine from 'alpinejs'
 import collapse from '@alpinejs/collapse'
 import Crux from '../src/index.js'
 
-beforeAll(() => {
-  window.Alpine = Alpine
-  Alpine.plugin(collapse)
-  Alpine.plugin(Crux)
-  Alpine.start()
-})
-
-afterEach(async () => {
-  document.body.innerHTML = ''
-  await flush()
-})
-
 // Alpine picks up injected markup via MutationObserver; a macrotask
 // guarantees init has run.
-const flush = () => new Promise((resolve) => setTimeout(resolve, 0))
-const raf = () => new Promise((resolve) => requestAnimationFrame(() => resolve()))
+const flush = () =>
+  new Promise((resolve) => {
+    setTimeout(resolve, 0)
+  })
+const raf = () =>
+  new Promise((resolve) => {
+    requestAnimationFrame(() => resolve())
+  })
 
 // Alpine applies x-show display changes on the next animation frame, so
 // assertions about a toggled panel's display need to settle through one.
@@ -27,6 +21,18 @@ const settle = async () => {
   await flush()
 }
 
+beforeAll(() => {
+  window.Alpine = Alpine
+  Alpine.plugin(collapse)
+  Alpine.plugin(Crux)
+  Alpine.start()
+})
+
+afterEach(async () => {
+  document.body.replaceChildren()
+  await flush()
+})
+
 async function mount(html) {
   document.body.innerHTML = html
   await flush()
@@ -34,8 +40,8 @@ async function mount(html) {
 }
 
 const parts = (root) => ({
-  trigger: root.querySelector('[x-collapsible\\:trigger]'),
-  panel: root.querySelector('[x-collapsible\\:panel]'),
+  trigger: root.querySelector(String.raw`[x-collapsible\:trigger]`),
+  panel: root.querySelector(String.raw`[x-collapsible\:panel]`),
 })
 
 // The canonical trigger+panel skeleton most tests share; options carry the
@@ -82,7 +88,9 @@ describe('x-collapsible', () => {
   it('toggles on click and dispatches collapsible-change', async () => {
     const { trigger, panel } = await mountCollapsible()
     const events = []
-    document.addEventListener('collapsible-change', (e) => events.push(e.detail.value))
+    document.addEventListener('collapsible-change', (event) => {
+      events.push(event.detail.value)
+    })
 
     trigger.click()
     await settle()
@@ -190,8 +198,8 @@ describe('x-collapsible', () => {
       </div>
     `)
     const inner = root.querySelector('#inner')
-    const innerTrigger = inner.querySelector('[x-collapsible\\:trigger]')
-    const outerTrigger = root.querySelector('[x-collapsible\\:trigger]')
+    const innerTrigger = inner.querySelector(String.raw`[x-collapsible\:trigger]`)
+    const outerTrigger = root.querySelector(String.raw`[x-collapsible\:trigger]`)
 
     innerTrigger.click()
     await flush()
