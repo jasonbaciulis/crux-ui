@@ -31,6 +31,10 @@ export default defineConfig([
       // scope — `this` outside classes is the plugin API, not an accident.
       'unicorn/no-this-outside-of-class': 'off',
 
+      // `null` is fine as a deliberate "empty, filled in later" value;
+      // a literal `undefined` property reads like it was never declared.
+      'unicorn/no-null': 'off',
+
       // Strictness
       'no-unused-vars': [
         'error',
