@@ -16,7 +16,9 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix"
   },
   "keywords": [
     "alpinejs",
@@ -48,7 +50,13 @@
   },
   "devDependencies": {
     "@alpinejs/collapse": "^3.15.12",
+    "@eslint/js": "^10.0.1",
+    "@vitest/eslint-plugin": "^1.6.26",
     "alpinejs": "^3.14.0",
+    "eslint": "^10.8.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-unicorn": "^73.0.0",
+    "globals": "^17.9.0",
     "jsdom": "^25.0.0",
     "prettier": "^3.9.6",
     "vitest": "^3.0.0"
