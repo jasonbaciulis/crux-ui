@@ -7,16 +7,16 @@
 // present means empty string, absent means removed.
 const openClosedBindings = {
   ':data-open'() {
-    return this._collapsible.open ? '' : false
+    return this.__collapsible.open ? '' : false
   },
   ':data-closed'() {
-    return this._collapsible.open ? false : ''
+    return this.__collapsible.open ? false : ''
   },
 }
 
 const disabledBinding = {
   ':data-disabled'() {
-    return this._collapsible.disabled ? '' : false
+    return this.__collapsible.disabled ? '' : false
   },
 }
 
@@ -29,15 +29,23 @@ export default function collapsible(Alpine) {
     else if (value === 'trigger') trigger(el, Alpine)
     else if (value === 'panel') panel(el, Alpine, { effect, cleanup, evaluate })
     else console.warn(`[crux] Unknown part "x-collapsible:${value}"`, el)
-  })
+    // Custom directives normally run in the last slot, after the element's
+    // own x-bind/x-show/x-model — user bindings on the root that read
+    // $collapsible would capture a scope without __collapsible and never
+    // recover. Running before `bind` puts the injected x-data first.
+    // x-model still pairs up: x-modelable entangles in a microtask.
+  }).before('bind')
 
   Alpine.magic('collapsible', (el) => {
-    const state = Alpine.$data(el)._collapsible
+    const state = Alpine.$data(el).__collapsible
+
     if (!state) {
       console.warn('[crux] $collapsible was used outside of x-collapsible', el)
       return noopApi
     }
+
     let api = magicApis.get(state)
+
     if (!api) {
       api = {
         get isOpen() {
@@ -63,7 +71,7 @@ function root(el, Alpine) {
   Alpine.bind(el, {
     'x-data'() {
       return {
-        _collapsible: {
+        __collapsible: {
           open: el.hasAttribute('default-open'),
           disabled: el.hasAttribute('disabled'),
           untilFound: el.hasAttribute('hidden-until-found'),
@@ -77,7 +85,7 @@ function root(el, Alpine) {
           },
         },
         init() {
-          this.$watch('_collapsible.open', (open) => {
+          this.$watch('__collapsible.open', (open) => {
             this.$dispatch('collapsible-change', { value: open })
           })
         },
@@ -90,7 +98,7 @@ function root(el, Alpine) {
     },
     // Without x-model on the element this is inert (Alpine only entangles
     // when el._x_model exists), so it's safe to bind unconditionally.
-    'x-modelable': '_collapsible.open',
+    'x-modelable': '__collapsible.open',
     ...openClosedBindings,
     ...disabledBinding,
   })
@@ -105,35 +113,35 @@ function trigger(el, Alpine) {
 
   Alpine.bind(el, {
     ':aria-expanded'() {
-      return this._collapsible.open ? 'true' : 'false'
+      return this.__collapsible.open ? 'true' : 'false'
     },
     ':aria-controls'() {
-      return this._collapsible.panelId || false
+      return this.__collapsible.panelId || false
     },
     ':data-panel-open'() {
-      return this._collapsible.open ? '' : false
+      return this.__collapsible.open ? '' : false
     },
     ...disabledBinding,
     '@click'() {
-      this._collapsible.toggle()
+      this.__collapsible.toggle()
     },
     ...(isButton
       ? {
           ':disabled'() {
-            return this._collapsible.disabled
+            return this.__collapsible.disabled
           },
         }
       : {
           role: 'button',
           tabindex: '0',
           ':aria-disabled'() {
-            return this._collapsible.disabled ? 'true' : false
+            return this.__collapsible.disabled ? 'true' : false
           },
           '@keydown.enter.prevent'() {
-            this._collapsible.toggle()
+            this.__collapsible.toggle()
           },
           '@keydown.space.prevent'() {
-            this._collapsible.toggle()
+            this.__collapsible.toggle()
           },
         }),
   })
@@ -155,12 +163,12 @@ function panel(el, Alpine, { effect, cleanup, evaluate }) {
           // visibility is managed through the hidden attribute alone —
           // no x-show, no JS transitions.
           ':hidden'() {
-            return this._collapsible.open ? false : 'until-found'
+            return this.__collapsible.open ? false : 'until-found'
           },
         }
       : {
           'x-show'() {
-            return this._collapsible.open
+            return this.__collapsible.open
           },
         }),
   })
@@ -200,9 +208,11 @@ function panel(el, Alpine, { effect, cleanup, evaluate }) {
 }
 
 function closestState(Alpine, el, part) {
-  const state = Alpine.$data(el)._collapsible
+  const state = Alpine.$data(el).__collapsible
+
   if (!state) {
     console.warn(`[crux] x-collapsible:${part} must be inside x-collapsible`, el)
   }
+
   return state
 }
