@@ -4,21 +4,31 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-Crux (`crux-ui` on npm) — headless, unstyled, accessible UI primitives for Alpine.js, distributed as an Alpine plugin. The current v0.0.1 is a name-claiming placeholder; `src/index.js` is the entire source. Primitives (dialog, combobox, tabs, popover, etc.) are being built here from scratch.
+Crux UI (`crux-ui` on npm) — headless, unstyled, accessible UI primitives for Alpine.js, the "Base UI for AlpineJS". This repo is layer 1 of a three-layer plan (primitives package → shadcn-style component registry → docs site); see `plans/PLAN.md` for the roadmap and decision log. **`API.md` is the authoritative v1 API spec** — directive grammar, config attributes, data-attribute styling contract, events, magics, and the build order for upcoming primitives. Read it before adding or changing any primitive.
 
-**PLAN.md is the source of truth** for the project's direction; **API.md specifies the primitive API surface** (directive grammar, config attributes, data-state styling contract, events, magics) — follow it when building primitives. Read both before doing substantive work. Key points:
+## Commands
 
-- This package is layer 1 of a three-layer, shadcn-style system: (1) this headless primitives npm package, (2) a static JSON component registry on Vercel with Blade/Antlers template variants, (3) a docs/preview site. Layers 2 and 3 live elsewhere; this repo is only the primitives package.
-- Primitives ship as a real npm dependency (not copied into projects) so a11y fixes propagate via version bumps.
-- Each primitive must implement correct WAI-ARIA roles/attributes, keyboard navigation, focus trap/restore, and dismiss behavior. Positioning uses Floating UI.
-- **Clean-room requirement:** code here must NOT be derived from the author's paid AlpineUI prototype source. Reimplementing a directive API surface is fine; copying implementation is not. Never ask to see or reference that private source.
+Bun is the package manager (`bun.lock`, CI uses bun); scripts also work with npm.
 
-## Development
+- `bun install` — install dependencies
+- `bun run test` — run all tests once (vitest, jsdom environment)
+- `bun run test:watch` — vitest watch mode
+- `bunx vitest run tests/collapsible.test.js` — run a single test file
+- `bunx vitest run -t "respects default-open"` — run a single test by name
+- `bun run lint` / `bun run lint:fix` — ESLint
+- `bun run format` / `bun run format:check` — Prettier
 
-There is no build step, test runner, or linter configured yet. The package is plain ESM (`"type": "module"`), entry point `src/index.js`, with `alpinejs ^3.0.0` as a peer dependency. The plugin is registered via `Alpine.plugin(Crux)`.
+## Architecture
 
-If you add tooling (tests, bundling, lint), update this file with the commands.
+Each primitive is one module in `src/<name>.js` exporting `(Alpine) => void` that registers one directive + one magic. `src/index.js` is the default plugin registering all primitives; per-primitive entries are exposed via package.json `exports` for bundle-conscious users. Shared behavior with no Alpine primitive (roving focus, dismiss layering, focus trap, Floating UI positioning) will live in `src/core/` — everything else must reuse Alpine's own machinery: `x-id`/`$id` for ids, `$dispatch` for events, `$watch` for change tracking, `x-modelable` for `x-model`, `Alpine.bind` for applying bindings, `x-collapse`/`x-transition` for animation (Crux ships no animation of its own).
 
-## Workflow
+The uniform grammar every primitive follows (details in API.md):
 
-- `/pr` (`.claude/commands/pr.md`) pushes the current branch and opens a PR to `main` with a `## What's new` / `## What's fixed` body.
+- One directive per component; parts are the directive argument (`x-accordion`, `x-accordion:trigger`). Part names follow Base UI vocabulary.
+- Static config = plain kebab-case attributes on the root (`default-open`, `multiple`), readable by any server templating engine — no Alpine expressions required.
+- Dynamic control = `x-model` via `x-modelable`; it overrides `default-*` attrs.
+- State out = boolean-presence data-attributes (`data-open` present/absent, never `data-state="…"` values), real ARIA attributes, kebab-case bubbling CustomEvents (`<component>-change` with `detail.value`), and a `$<component>` magic that resolves the nearest root through Alpine's scope chain (not `closest()`).
+
+`src/collapsible.js` is the reference implementation — it proves the whole grammar and is the pattern to copy for new primitives. Internal component state lives in an underscore-prefixed `x-data` property (`_collapsible`) so parts reach it via `Alpine.$data(el)`; magic objects are cached per-state in a WeakMap; `console.warn` with a `[crux]` prefix is the misuse-warning channel.
+
+Public contract for semver: directive/part names, config attributes, `data-*` attributes, CSS variables, event names/payloads, magic APIs, model value types. Internal DOM manipulation and core utils are not public API.
