@@ -1,4 +1,4 @@
-# Crux
+# Crux UI
 
 Headless, unstyled, accessible UI primitives for [Alpine.js](https://alpinejs.dev).
 
@@ -13,15 +13,15 @@ opinions. Bring your own markup and CSS; Crux handles the behavior.
 ## Planned primitives
 
 accordion, carousel, combobox, dialog, drawer, popover, tabs, switch, radio group,
-select.
+select, otp-field, number-field.
 
 ## Usage (once real)
 
 ```js
 import Alpine from 'alpinejs'
-import Crux from 'crux-ui'
+import CruxUI from 'crux-ui'
 
-Alpine.plugin(Crux)
+Alpine.plugin(CruxUI)
 Alpine.start()
 ```
 

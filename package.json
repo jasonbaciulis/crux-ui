@@ -5,11 +5,17 @@
   "type": "module",
   "main": "src/index.js",
   "exports": {
-    ".": "./src/index.js"
+    ".": "./src/index.js",
+    "./collapsible": "./src/collapsible.js",
+    "./package.json": "./package.json"
   },
   "files": [
     "src"
   ],
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
   "keywords": [
     "alpinejs",
     "alpine",
@@ -25,7 +31,10 @@
     "tabs",
     "popover"
   ],
-  "author": "Jason Baciulis <jason@remarkable.dev>",
+  "author": {
+    "name": "Jason Baciulis",
+    "url": "https://x.com/jasonbaciulis"
+  },
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -33,6 +42,12 @@
   },
   "homepage": "https://crux-ui.com",
   "peerDependencies": {
-    "alpinejs": "^3.0.0"
+    "alpinejs": "^3.12.0"
+  },
+  "devDependencies": {
+    "@alpinejs/collapse": "^3.15.12",
+    "alpinejs": "^3.14.0",
+    "jsdom": "^25.0.0",
+    "vitest": "^3.0.0"
   }
 }
