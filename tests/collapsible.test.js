@@ -141,6 +141,21 @@ describe('x-collapsible', () => {
     expect(panel.style.display).toBe('none')
   })
 
+  it('initializes state before user bindings on the root element', async () => {
+    // Root-level bindings run in the `bind` slot; the directive registers
+    // with .before('bind') so its scope exists by then — otherwise
+    // $collapsible would resolve to the non-reactive noop API.
+    const { root, trigger } = await mountCollapsible({
+      root: `:data-user-open="$collapsible.isOpen ? '' : false"`,
+    })
+
+    expect(root.hasAttribute('data-user-open')).toBe(false)
+
+    trigger.click()
+    await flush()
+    expect(root.hasAttribute('data-user-open')).toBe(true)
+  })
+
   it('honors disabled', async () => {
     const { root, trigger } = await mountCollapsible({ root: 'disabled' })
 
