@@ -1,16 +1,9 @@
-// Collapsible — WAI-ARIA disclosure pattern.
-//
-//   <div x-collapsible default-open>
-//     <button x-collapsible:trigger>Advanced options</button>
-//     <div x-collapsible:panel hidden>…</div>
-//   </div>
-//
 // Config attrs (root): default-open, disabled, hidden-until-found.
 // x-model (boolean) overrides default-open. Event: `collapsible-change`
 // with `detail.value` (the model value type — boolean here), bubbling from
 // the root. Magic: $collapsible.
 
-// Data-state styling contract (API.md): boolean presence attributes —
+// Data-state styling contract: boolean presence attributes —
 // present means empty string, absent means removed.
 const openClosedBindings = {
   ':data-open'() {
@@ -107,7 +100,7 @@ function trigger(el, Alpine) {
   const state = closestState(Alpine, el, 'trigger')
   if (!state) return
 
-  const isButton = el.tagName === 'BUTTON'
+  const isButton = el.tagName.toLowerCase() === 'button'
   if (isButton && !el.hasAttribute('type')) el.setAttribute('type', 'button')
 
   Alpine.bind(el, {
