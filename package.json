@@ -1,0 +1,38 @@
+{
+  "name": "crux-ui",
+  "version": "0.0.1",
+  "description": "Crux — headless, unstyled, accessible UI primitives for Alpine.js.",
+  "type": "module",
+  "main": "src/index.js",
+  "exports": {
+    ".": "./src/index.js"
+  },
+  "files": [
+    "src"
+  ],
+  "keywords": [
+    "alpinejs",
+    "alpine",
+    "headless",
+    "unstyled",
+    "primitives",
+    "accessibility",
+    "aria",
+    "ui",
+    "components",
+    "dialog",
+    "combobox",
+    "tabs",
+    "popover"
+  ],
+  "author": "Jason Baciulis <jason@remarkable.dev>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jasonbaciulis/crux-ui.git"
+  },
+  "homepage": "https://crux-ui.com",
+  "peerDependencies": {
+    "alpinejs": "^3.0.0"
+  }
+}
