@@ -52,6 +52,9 @@ const untilFoundBinding = {
   },
 }
 
+// `scope` is the bindings-object `this`: the data stack plus Alpine's magics.
+const panelIdIn = (scope) => scope.__collapsible.authorPanelId ?? scope.$id(PANEL_ID_SCOPE)
+
 const partInitializers = { trigger, panel }
 
 const noopApi = { isOpen: false, open() {}, close() {}, toggle() {} }
@@ -88,10 +91,10 @@ export default function collapsible(Alpine) {
         return state.open
       },
       open() {
-        state.setOpen(true)
+        state.open = true
       },
       close() {
-        state.setOpen(false)
+        state.open = false
       },
       toggle() {
         state.toggle()
@@ -127,16 +130,22 @@ function root(el, Alpine) {
 
 function collapsibleState(el) {
   return {
-    open: el.hasAttribute('default-open'),
+    // Every write route — clicks, keyboard, $collapsible, x-model — assigns
+    // to `open`, so the disabled guard belongs in its setter and nowhere else.
+    // openValue must stay a property: a closure variable is not reactive.
+    openValue: el.hasAttribute('default-open'),
     disabled: el.hasAttribute('disabled'),
     untilFound: el.hasAttribute('hidden-until-found'),
-    panelId: null,
-    setOpen(open) {
+    authorPanelId: null,
+    get open() {
+      return this.openValue
+    },
+    set open(open) {
       if (this.disabled) return
-      this.open = open
+      this.openValue = open
     },
     toggle() {
-      this.setOpen(!this.open)
+      this.open = !this.open
     },
   }
 }
@@ -153,7 +162,7 @@ function trigger(el, Alpine) {
       return this.__collapsible.open ? 'true' : 'false'
     },
     ':aria-controls'() {
-      return this.__collapsible.panelId || false
+      return panelIdIn(this)
     },
     ':data-panel-open'() {
       return this.__collapsible.open ? '' : false
@@ -166,13 +175,18 @@ function trigger(el, Alpine) {
   })
 }
 
-function panel(el, Alpine, { effect, cleanup, evaluate }) {
+function panel(el, Alpine, { effect, cleanup }) {
   const state = closestState(Alpine, el, 'panel')
   if (!state) return
 
-  adoptPanelId(el, state, evaluate)
+  // An author's id is respected, never overwritten; the trigger reads it back
+  // out of state so both parts point at the same value.
+  if (el.id) state.authorPanelId = el.id
 
   Alpine.bind(el, {
+    ':id'() {
+      return panelIdIn(this)
+    },
     ...openClosedBindings,
     ...(state.untilFound ? untilFoundBinding : displayBinding),
   })
@@ -188,11 +202,6 @@ function panel(el, Alpine, { effect, cleanup, evaluate }) {
   publishPanelSize(el, state, effect, cleanup)
 }
 
-function adoptPanelId(el, state, evaluate) {
-  state.panelId = el.id || evaluate(`$id('${PANEL_ID_SCOPE}')`)
-  el.id = state.panelId
-}
-
 function openOnFindInPage(el, state, cleanup) {
   const onBeforeMatch = () => {
     if (state.disabled) {
@@ -201,7 +210,7 @@ function openOnFindInPage(el, state, cleanup) {
       requestAnimationFrame(() => el.setAttribute('hidden', 'until-found'))
       return
     }
-    state.setOpen(true)
+    state.open = true
   }
 
   el.addEventListener('beforematch', onBeforeMatch)

@@ -141,6 +141,68 @@ describe('x-collapsible', () => {
     expect(panel.style.display).toBe('none')
   })
 
+  it('follows x-model changes made from the outer scope', async () => {
+    const root = await mount(`
+      <div x-data="{ expanded: false }">
+        <div x-collapsible x-model="expanded">
+          <button x-collapsible:trigger>Toggle</button>
+          <div x-collapsible:panel hidden>Content</div>
+        </div>
+        <button type="button" id="open-outside" @click="expanded = true">Open</button>
+        <button type="button" id="close-outside" @click="expanded = false">Close</button>
+      </div>
+    `)
+    const { trigger, panel } = parts(root)
+    const collapsible = root.querySelector('[x-collapsible]')
+
+    await settle()
+    expect(collapsible.hasAttribute('data-open')).toBe(false)
+
+    root.querySelector('#open-outside').click()
+    await settle()
+    expect(trigger.getAttribute('aria-expanded')).toBe('true')
+    expect(panel.style.display).not.toBe('none')
+
+    root.querySelector('#close-outside').click()
+    await settle()
+    expect(trigger.getAttribute('aria-expanded')).toBe('false')
+    expect(panel.style.display).toBe('none')
+  })
+
+  it('lets x-model override default-open', async () => {
+    const root = await mount(`
+      <div x-data="{ expanded: false }">
+        <div x-collapsible default-open x-model="expanded">
+          <button x-collapsible:trigger>Toggle</button>
+          <div x-collapsible:panel>Content</div>
+        </div>
+      </div>
+    `)
+    const collapsible = root.querySelector('[x-collapsible]')
+
+    await settle()
+    expect(collapsible.hasAttribute('data-open')).toBe(false)
+    expect(parts(root).trigger.getAttribute('aria-expanded')).toBe('false')
+  })
+
+  it('refuses x-model writes while disabled', async () => {
+    const root = await mount(`
+      <div x-data="{ expanded: false }">
+        <div x-collapsible disabled x-model="expanded">
+          <button x-collapsible:trigger>Toggle</button>
+          <div x-collapsible:panel hidden>Content</div>
+        </div>
+        <button type="button" id="open-outside" @click="expanded = true">Open</button>
+      </div>
+    `)
+    const collapsible = root.querySelector('[x-collapsible]')
+
+    root.querySelector('#open-outside').click()
+    await settle()
+    expect(collapsible.hasAttribute('data-open')).toBe(false)
+    expect(parts(root).trigger.getAttribute('aria-expanded')).toBe('false')
+  })
+
   it('initializes state before user bindings on the root element', async () => {
     // Root-level bindings run in the `bind` slot; the directive registers
     // with .before('bind') so its scope exists by then — otherwise
@@ -257,6 +319,50 @@ describe('x-collapsible', () => {
 
     expect(panel.id).toBe('my-panel')
     expect(trigger.getAttribute('aria-controls')).toBe('my-panel')
+  })
+
+  it('points every trigger at the one panel', async () => {
+    const root = await mount(`
+      <div x-collapsible>
+        <button x-collapsible:trigger id="first">Toggle</button>
+        <button x-collapsible:trigger id="second">Toggle</button>
+        <div x-collapsible:panel hidden>Content</div>
+      </div>
+    `)
+    const first = root.querySelector('#first')
+    const second = root.querySelector('#second')
+    const { panel } = parts(root)
+
+    expect(first.getAttribute('aria-controls')).toBe(panel.id)
+    expect(second.getAttribute('aria-controls')).toBe(panel.id)
+
+    first.click()
+    await flush()
+    expect(second.getAttribute('aria-expanded')).toBe('true')
+
+    second.click()
+    await flush()
+    expect(first.getAttribute('aria-expanded')).toBe('false')
+  })
+
+  it('gives each root its own panel id', async () => {
+    document.body.innerHTML = `
+      <div x-collapsible id="first">
+        <button x-collapsible:trigger>Toggle</button>
+        <div x-collapsible:panel hidden>Content</div>
+      </div>
+      <div x-collapsible id="second">
+        <button x-collapsible:trigger>Toggle</button>
+        <div x-collapsible:panel hidden>Content</div>
+      </div>
+    `
+    await flush()
+    const first = parts(document.querySelector('#first'))
+    const second = parts(document.querySelector('#second'))
+
+    expect(first.panel.id).not.toBe(second.panel.id)
+    expect(first.trigger.getAttribute('aria-controls')).toBe(first.panel.id)
+    expect(second.trigger.getAttribute('aria-controls')).toBe(second.panel.id)
   })
 
   it('uses hidden="until-found" and opens on beforematch', async () => {

@@ -95,6 +95,11 @@ binding for the cases where surrounding state matters:
 Model value types: accordion → array of item values; tabs → string;
 dialog/popover → boolean.
 
+`disabled` outranks the model. A disabled root refuses every state change,
+including a write from the bound variable, so the variable can hold a value
+the component declines to take. Read the component's state from its
+`data-*` attributes or its magic, not from the model, while it is disabled.
+
 ### 4. State out: data-attributes, magics, events
 
 **Data-attributes** (the styling API — Base UI's scheme: boolean _presence_
