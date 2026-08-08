@@ -63,7 +63,10 @@ describe('x-collapsible', () => {
     expect(trigger.getAttribute('aria-expanded')).toBe('false')
     expect(trigger.getAttribute('aria-controls')).toBe(panel.id)
     expect(trigger.getAttribute('type')).toBe('button')
-    expect(panel.id).toMatch(/^crux-ui-collapsible-panel-/)
+    expect(panel.id).toMatch(/^crux-ui-collapsible-\d+-panel$/)
+    // Nothing points at the trigger, so it gets no generated id — same as
+    // Base UI's collapsible trigger and Alpine UI's disclosure button.
+    expect(trigger.id).toBe('')
     expect(panel.hasAttribute('hidden')).toBe(false)
     expect(panel.style.display).toBe('none')
     expect(root.hasAttribute('data-closed')).toBe(true)
@@ -274,6 +277,26 @@ describe('x-collapsible', () => {
     expect(parts(root).trigger.getAttribute('aria-expanded')).toBe('true')
   })
 
+  it('leaves author a11y attributes on the trigger alone', async () => {
+    const root = await mount(`
+      <h3 id="shipping-heading">Shipping</h3>
+      <div x-collapsible>
+        <button x-collapsible:trigger id="my-trigger" aria-label="Toggle shipping">
+          <svg aria-hidden="true"></svg>
+        </button>
+        <div x-collapsible:panel hidden>Content</div>
+      </div>
+    `)
+    const collapsible = document.querySelector('[x-collapsible]')
+    const { trigger, panel } = parts(collapsible)
+
+    expect(root.id).toBe('shipping-heading')
+    expect(trigger.id).toBe('my-trigger')
+    expect(trigger.getAttribute('aria-label')).toBe('Toggle shipping')
+    expect(trigger.getAttribute('aria-expanded')).toBe('false')
+    expect(trigger.getAttribute('aria-controls')).toBe(panel.id)
+  })
+
   it('makes non-button triggers keyboard-operable', async () => {
     const { trigger } = await mountCollapsible({ trigger: 'div' })
 
@@ -377,6 +400,9 @@ describe('x-collapsible', () => {
     const first = parts(document.querySelector('#first'))
     const second = parts(document.querySelector('#second'))
 
+    // The number identifies the instance and the suffix identifies the part.
+    expect(first.panel.id).toMatch(/^crux-ui-collapsible-\d+-panel$/)
+    expect(second.panel.id).toMatch(/^crux-ui-collapsible-\d+-panel$/)
     expect(first.panel.id).not.toBe(second.panel.id)
     expect(first.trigger.getAttribute('aria-controls')).toBe(first.panel.id)
     expect(second.trigger.getAttribute('aria-controls')).toBe(second.panel.id)

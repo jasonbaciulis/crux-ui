@@ -1,4 +1,7 @@
-const PANEL_ID_SCOPE = 'crux-ui-collapsible-panel'
+// One id scope per root, keyed per part: `crux-ui-collapsible-1-panel`.
+// The number identifies the instance, so every part of one collapsible
+// carries the same number.
+const ID_SCOPE = 'crux-ui-collapsible'
 
 const openClosedBindings = {
   ':data-open'() {
@@ -56,7 +59,7 @@ const untilFoundBinding = {
 }
 
 // `scope` is the bindings-object `this`: the data stack plus Alpine's magics.
-const panelIdIn = (scope) => scope.__collapsible.authorPanelId ?? scope.$id(PANEL_ID_SCOPE)
+const panelIdIn = (scope) => scope.__collapsible.authorPanelId ?? scope.$id(ID_SCOPE, 'panel')
 
 const partInitializers = { trigger, panel }
 
@@ -121,7 +124,7 @@ function root(el, Alpine) {
     },
     // Scopes the generated id to this root, so trigger and panel agree on it.
     'x-id'() {
-      return [PANEL_ID_SCOPE]
+      return [ID_SCOPE]
     },
     // Without x-model on the element this is inert (Alpine only entangles
     // when el._x_model exists), so it's safe to bind unconditionally.
@@ -170,8 +173,8 @@ function panel(el, Alpine, { effect, cleanup }) {
   const state = closestState(Alpine, el, 'panel')
   if (!state) return
 
-  // An author's id is respected, never overwritten; the trigger reads it back
-  // out of state so both parts point at the same value.
+  // An author's id is respected, never overwritten; it goes into state so
+  // every trigger points at it instead of at a generated one.
   if (el.id) {
     state.authorPanelId = el.id
     warnOnDuplicateId(el)
@@ -196,7 +199,7 @@ function panel(el, Alpine, { effect, cleanup }) {
   publishPanelSize(el, state, effect, cleanup)
 }
 
-// A hand-written id that another element already owns breaks aria-controls
+// A hand-written id that another element already owns breaks the wiring
 // silently, so say so at init instead of leaving it to devtools.
 function warnOnDuplicateId(el) {
   if (document.getElementById(el.id) !== el) {
