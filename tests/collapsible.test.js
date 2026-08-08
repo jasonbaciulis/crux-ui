@@ -8,7 +8,7 @@ const flush = () =>
   new Promise((resolve) => {
     setTimeout(resolve, 0)
   })
-const raf = () =>
+const animationFrame = () =>
   new Promise((resolve) => {
     requestAnimationFrame(() => resolve())
   })
@@ -17,7 +17,7 @@ const raf = () =>
 // assertions about a toggled panel's display need to settle through one.
 const settle = async () => {
   await flush()
-  await raf()
+  await animationFrame()
   await flush()
 }
 
@@ -63,7 +63,10 @@ describe('x-collapsible', () => {
     expect(trigger.getAttribute('aria-expanded')).toBe('false')
     expect(trigger.getAttribute('aria-controls')).toBe(panel.id)
     expect(trigger.getAttribute('type')).toBe('button')
-    expect(panel.id).toMatch(/^crux-ui-collapsible-panel-/)
+    expect(panel.id).toMatch(/^crux-ui-collapsible-\d+-panel$/)
+    // Nothing points at the trigger, so it gets no generated id — same as
+    // Base UI's collapsible trigger and Alpine UI's disclosure button.
+    expect(trigger.id).toBe('')
     expect(panel.hasAttribute('hidden')).toBe(false)
     expect(panel.style.display).toBe('none')
     expect(root.hasAttribute('data-closed')).toBe(true)
@@ -141,6 +144,71 @@ describe('x-collapsible', () => {
     expect(panel.style.display).toBe('none')
   })
 
+  it('follows x-model changes made from the outer scope', async () => {
+    const root = await mount(`
+      <div x-data="{ expanded: false }">
+        <div x-collapsible x-model="expanded">
+          <button x-collapsible:trigger>Toggle</button>
+          <div x-collapsible:panel hidden>Content</div>
+        </div>
+        <button type="button" id="open-outside" @click="expanded = true">Open</button>
+        <button type="button" id="close-outside" @click="expanded = false">Close</button>
+      </div>
+    `)
+    const { trigger, panel } = parts(root)
+    const collapsible = root.querySelector('[x-collapsible]')
+
+    await settle()
+    expect(collapsible.hasAttribute('data-open')).toBe(false)
+
+    root.querySelector('#open-outside').click()
+    await settle()
+    expect(trigger.getAttribute('aria-expanded')).toBe('true')
+    expect(panel.style.display).not.toBe('none')
+
+    root.querySelector('#close-outside').click()
+    await settle()
+    expect(trigger.getAttribute('aria-expanded')).toBe('false')
+    expect(panel.style.display).toBe('none')
+  })
+
+  it('lets x-model override default-open', async () => {
+    const root = await mount(`
+      <div x-data="{ expanded: false }">
+        <div x-collapsible default-open x-model="expanded">
+          <button x-collapsible:trigger>Toggle</button>
+          <div x-collapsible:panel>Content</div>
+        </div>
+      </div>
+    `)
+    const collapsible = root.querySelector('[x-collapsible]')
+
+    await settle()
+    expect(collapsible.hasAttribute('data-open')).toBe(false)
+    expect(parts(root).trigger.getAttribute('aria-expanded')).toBe('false')
+  })
+
+  // Base UI defines `disabled` as "ignore user interaction", so app-initiated
+  // state still lands and the model can never disagree with the component.
+  it('still follows x-model while disabled', async () => {
+    const root = await mount(`
+      <div x-data="{ expanded: false }">
+        <div x-collapsible disabled x-model="expanded">
+          <button x-collapsible:trigger>Toggle</button>
+          <div x-collapsible:panel hidden>Content</div>
+        </div>
+        <button type="button" id="open-outside" @click="expanded = true">Open</button>
+      </div>
+    `)
+    const collapsible = root.querySelector('[x-collapsible]')
+
+    root.querySelector('#open-outside').click()
+    await settle()
+    expect(collapsible.hasAttribute('data-open')).toBe(true)
+    expect(parts(root).trigger.getAttribute('aria-expanded')).toBe('true')
+    expect(collapsible.hasAttribute('data-disabled')).toBe(true)
+  })
+
   it('initializes state before user bindings on the root element', async () => {
     // Root-level bindings run in the `bind` slot; the directive registers
     // with .before('bind') so its scope exists by then — otherwise
@@ -166,6 +234,67 @@ describe('x-collapsible', () => {
     trigger.click()
     await flush()
     expect(trigger.getAttribute('aria-expanded')).toBe('false')
+  })
+
+  // A native button ignores clicks by itself, so a div trigger is the only way
+  // to reach the disabled guard on the interaction handlers.
+  it('ignores user interaction while disabled', async () => {
+    const root = await mount(`
+      <div x-collapsible disabled>
+        <div x-collapsible:trigger>Toggle</div>
+        <div x-collapsible:panel hidden>Content</div>
+      </div>
+    `)
+    const { trigger } = parts(root)
+
+    expect(trigger.getAttribute('aria-disabled')).toBe('true')
+
+    trigger.click()
+    await flush()
+    expect(root.hasAttribute('data-open')).toBe(false)
+
+    trigger.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }))
+    await flush()
+    expect(root.hasAttribute('data-open')).toBe(false)
+
+    trigger.dispatchEvent(new KeyboardEvent('keydown', { key: ' ', bubbles: true }))
+    await flush()
+    expect(root.hasAttribute('data-open')).toBe(false)
+  })
+
+  it('still obeys $collapsible while disabled', async () => {
+    const root = await mount(`
+      <div x-collapsible disabled>
+        <button x-collapsible:trigger>Toggle</button>
+        <div x-collapsible:panel hidden>Content</div>
+        <button type="button" id="via-magic" @click="$collapsible.open()">Open</button>
+      </div>
+    `)
+
+    root.querySelector('#via-magic').click()
+    await flush()
+    expect(root.hasAttribute('data-open')).toBe(true)
+    expect(parts(root).trigger.getAttribute('aria-expanded')).toBe('true')
+  })
+
+  it('leaves author a11y attributes on the trigger alone', async () => {
+    const root = await mount(`
+      <h3 id="shipping-heading">Shipping</h3>
+      <div x-collapsible>
+        <button x-collapsible:trigger id="my-trigger" aria-label="Toggle shipping">
+          <svg aria-hidden="true"></svg>
+        </button>
+        <div x-collapsible:panel hidden>Content</div>
+      </div>
+    `)
+    const collapsible = document.querySelector('[x-collapsible]')
+    const { trigger, panel } = parts(collapsible)
+
+    expect(root.id).toBe('shipping-heading')
+    expect(trigger.id).toBe('my-trigger')
+    expect(trigger.getAttribute('aria-label')).toBe('Toggle shipping')
+    expect(trigger.getAttribute('aria-expanded')).toBe('false')
+    expect(trigger.getAttribute('aria-controls')).toBe(panel.id)
   })
 
   it('makes non-button triggers keyboard-operable', async () => {
@@ -232,6 +361,103 @@ describe('x-collapsible', () => {
     expect(trigger.getAttribute('aria-controls')).toBe('my-panel')
   })
 
+  it('points every trigger at the one panel', async () => {
+    const root = await mount(`
+      <div x-collapsible>
+        <button x-collapsible:trigger id="first">Toggle</button>
+        <button x-collapsible:trigger id="second">Toggle</button>
+        <div x-collapsible:panel hidden>Content</div>
+      </div>
+    `)
+    const first = root.querySelector('#first')
+    const second = root.querySelector('#second')
+    const { panel } = parts(root)
+
+    expect(first.getAttribute('aria-controls')).toBe(panel.id)
+    expect(second.getAttribute('aria-controls')).toBe(panel.id)
+
+    first.click()
+    await flush()
+    expect(second.getAttribute('aria-expanded')).toBe('true')
+
+    second.click()
+    await flush()
+    expect(first.getAttribute('aria-expanded')).toBe('false')
+  })
+
+  it('gives each root its own panel id', async () => {
+    document.body.innerHTML = `
+      <div x-collapsible id="first">
+        <button x-collapsible:trigger>Toggle</button>
+        <div x-collapsible:panel hidden>Content</div>
+      </div>
+      <div x-collapsible id="second">
+        <button x-collapsible:trigger>Toggle</button>
+        <div x-collapsible:panel hidden>Content</div>
+      </div>
+    `
+    await flush()
+    const first = parts(document.querySelector('#first'))
+    const second = parts(document.querySelector('#second'))
+
+    // The number identifies the instance and the suffix identifies the part.
+    expect(first.panel.id).toMatch(/^crux-ui-collapsible-\d+-panel$/)
+    expect(second.panel.id).toMatch(/^crux-ui-collapsible-\d+-panel$/)
+    expect(first.panel.id).not.toBe(second.panel.id)
+    expect(first.trigger.getAttribute('aria-controls')).toBe(first.panel.id)
+    expect(second.trigger.getAttribute('aria-controls')).toBe(second.panel.id)
+  })
+
+  it('warns when an author-provided panel id is already taken', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+
+    document.body.innerHTML = `
+      <div id="my-panel">Something else already owns this id</div>
+      <div x-collapsible>
+        <button x-collapsible:trigger>Toggle</button>
+        <div x-collapsible:panel id="my-panel" hidden>Content</div>
+      </div>
+    `
+    await flush()
+
+    expect(warn).toHaveBeenCalledWith(
+      expect.stringContaining('Duplicate id "my-panel"'),
+      expect.anything()
+    )
+    warn.mockRestore()
+  })
+
+  it('warns when two panels are given the same author id', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+
+    document.body.innerHTML = `
+      <div x-collapsible>
+        <button x-collapsible:trigger>One</button>
+        <div x-collapsible:panel id="shared" hidden>First</div>
+      </div>
+      <div x-collapsible>
+        <button x-collapsible:trigger>Two</button>
+        <div x-collapsible:panel id="shared" hidden>Second</div>
+      </div>
+    `
+    await flush()
+
+    expect(warn).toHaveBeenCalledWith(
+      expect.stringContaining('Duplicate id "shared"'),
+      expect.anything()
+    )
+    warn.mockRestore()
+  })
+
+  it('stays quiet for a unique author-provided panel id', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+
+    await mountCollapsible({ panel: 'id="unique-panel" hidden' })
+
+    expect(warn).not.toHaveBeenCalled()
+    warn.mockRestore()
+  })
+
   it('uses hidden="until-found" and opens on beforematch', async () => {
     const { root, trigger, panel } = await mountCollapsible({
       root: 'hidden-until-found',
@@ -261,6 +487,55 @@ describe('x-collapsible', () => {
     expect(panel.getAttribute('hidden')).toBe('until-found')
     expect(trigger.getAttribute('aria-expanded')).toBe('false')
     expect(root.hasAttribute('data-open')).toBe(false)
+  })
+
+  it('warns about an unknown part', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+
+    await mount(`
+      <div x-collapsible>
+        <div x-collapsible:bogus>Nope</div>
+      </div>
+    `)
+
+    expect(warn).toHaveBeenCalledWith(
+      expect.stringContaining('Unknown part "x-collapsible:bogus"'),
+      expect.anything()
+    )
+    warn.mockRestore()
+  })
+
+  it('warns when a part is used outside a root', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+
+    await mount(`<div x-data><button x-collapsible:trigger>Toggle</button></div>`)
+
+    expect(warn).toHaveBeenCalledWith(
+      expect.stringContaining('x-collapsible:trigger must be inside x-collapsible'),
+      expect.anything()
+    )
+    warn.mockRestore()
+  })
+
+  it('exposes an inert $collapsible outside a root', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const root = await mount(`
+      <div x-data>
+        <span x-text="String($collapsible.isOpen)"></span>
+        <button type="button" @click="$collapsible.toggle()">Toggle</button>
+      </div>
+    `)
+
+    expect(root.querySelector('span').textContent).toBe('false')
+
+    root.querySelector('button').click()
+    await flush()
+    expect(root.querySelector('span').textContent).toBe('false')
+    expect(warn).toHaveBeenCalledWith(
+      expect.stringContaining('$collapsible was used outside of x-collapsible'),
+      expect.anything()
+    )
+    warn.mockRestore()
   })
 
   it('composes with x-collapse, which takes over visibility', async () => {

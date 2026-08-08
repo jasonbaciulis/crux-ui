@@ -1,10 +1,8 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
-
 ## What this is
 
-Crux UI (`crux-ui` on npm) — headless, unstyled, accessible UI primitives for Alpine.js, the "Base UI for AlpineJS". This repo is layer 1 of a three-layer plan (primitives package → shadcn-style component registry → docs site); see `plans/PLAN.md` for the roadmap and decision log. **`API.md` is the authoritative v1 API spec** — directive grammar, config attributes, data-attribute styling contract, events, magics, and the build order for upcoming primitives. Read it before adding or changing any primitive.
+Crux UI (`crux-ui` on npm) — headless, unstyled, accessible UI primitives for Alpine.js, the "Base UI for AlpineJS". This repo is layer 1 of a three-layer plan (primitives package → shadcn-style component registry → docs site); see `plans/PLAN.md` for the roadmap and decision log. **`API.md` is the v1 API spec** — directive grammar, config attributes, data-attribute styling contract, events, magics, and the build order for upcoming primitives. Read it before adding or changing any primitive. If you have better suggestions, feel free to push back on it.
 
 ## Commands
 
@@ -29,6 +27,6 @@ The uniform grammar every primitive follows (details in API.md):
 - Dynamic control = `x-model` via `x-modelable`; it overrides `default-*` attrs.
 - State out = boolean-presence data-attributes (`data-open` present/absent, never `data-state="…"` values), real ARIA attributes, kebab-case bubbling CustomEvents (`<component>-change` with `detail.value`), and a `$<component>` magic that resolves the nearest root through Alpine's scope chain (not `closest()`).
 
-`src/collapsible.js` is the reference implementation — it proves the whole grammar and is the pattern to copy for new primitives. Internal component state lives in a double-underscore-prefixed `x-data` property (`__collapsible`) so parts reach it via `Alpine.$data(el)`; magic objects are cached per-state in a WeakMap; `console.warn` with a `[crux]` prefix is the misuse-warning channel.
+`src/collapsible.js` is the reference implementation — it proves the whole grammar and is the pattern to copy for new primitives. Internal component state lives in a double-underscore-prefixed `x-data` property (`__collapsible`) so parts reach it via `Alpine.$data(el)`; `console.warn` with a `[Crux UI]` prefix is the misuse-warning channel.
 
 Public contract for semver: directive/part names, config attributes, `data-*` attributes, CSS variables, event names/payloads, magic APIs, model value types. Internal DOM manipulation and core utils are not public API.
