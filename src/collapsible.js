@@ -71,7 +71,7 @@ export default function collapsible(Alpine) {
     const initializePart = value ? partInitializers[value] : root
 
     if (!initializePart) {
-      console.warn(`[crux] Unknown part "x-collapsible:${value}"`, el)
+      console.warn(`[Crux UI] Unknown part "x-collapsible:${value}"`, el)
       return
     }
 
@@ -82,7 +82,7 @@ export default function collapsible(Alpine) {
     const state = Alpine.$data(el).__collapsible
 
     if (!state) {
-      console.warn('[crux] $collapsible was used outside of x-collapsible', el)
+      console.warn('[Crux UI] $collapsible was used outside of x-collapsible', el)
       return noopApi
     }
 
@@ -172,7 +172,10 @@ function panel(el, Alpine, { effect, cleanup }) {
 
   // An author's id is respected, never overwritten; the trigger reads it back
   // out of state so both parts point at the same value.
-  if (el.id) state.authorPanelId = el.id
+  if (el.id) {
+    state.authorPanelId = el.id
+    warnOnDuplicateId(el)
+  }
 
   Alpine.bind(el, {
     ':id'() {
@@ -191,6 +194,14 @@ function panel(el, Alpine, { effect, cleanup }) {
   }
 
   publishPanelSize(el, state, effect, cleanup)
+}
+
+// A hand-written id that another element already owns breaks aria-controls
+// silently, so say so at init instead of leaving it to devtools.
+function warnOnDuplicateId(el) {
+  if (document.getElementById(el.id) !== el) {
+    console.warn(`[Crux UI] Duplicate id "${el.id}" on x-collapsible:panel`, el)
+  }
 }
 
 function openOnFindInPage(el, state, cleanup) {
@@ -233,7 +244,7 @@ function closestState(Alpine, el, part) {
   const state = Alpine.$data(el).__collapsible
 
   if (!state) {
-    console.warn(`[crux] x-collapsible:${part} must be inside x-collapsible`, el)
+    console.warn(`[Crux UI] x-collapsible:${part} must be inside x-collapsible`, el)
   }
 
   return state

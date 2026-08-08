@@ -382,6 +382,56 @@ describe('x-collapsible', () => {
     expect(second.trigger.getAttribute('aria-controls')).toBe(second.panel.id)
   })
 
+  it('warns when an author-provided panel id is already taken', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+
+    document.body.innerHTML = `
+      <div id="my-panel">Something else already owns this id</div>
+      <div x-collapsible>
+        <button x-collapsible:trigger>Toggle</button>
+        <div x-collapsible:panel id="my-panel" hidden>Content</div>
+      </div>
+    `
+    await flush()
+
+    expect(warn).toHaveBeenCalledWith(
+      expect.stringContaining('Duplicate id "my-panel"'),
+      expect.anything()
+    )
+    warn.mockRestore()
+  })
+
+  it('warns when two panels are given the same author id', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+
+    document.body.innerHTML = `
+      <div x-collapsible>
+        <button x-collapsible:trigger>One</button>
+        <div x-collapsible:panel id="shared" hidden>First</div>
+      </div>
+      <div x-collapsible>
+        <button x-collapsible:trigger>Two</button>
+        <div x-collapsible:panel id="shared" hidden>Second</div>
+      </div>
+    `
+    await flush()
+
+    expect(warn).toHaveBeenCalledWith(
+      expect.stringContaining('Duplicate id "shared"'),
+      expect.anything()
+    )
+    warn.mockRestore()
+  })
+
+  it('stays quiet for a unique author-provided panel id', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+
+    await mountCollapsible({ panel: 'id="unique-panel" hidden' })
+
+    expect(warn).not.toHaveBeenCalled()
+    warn.mockRestore()
+  })
+
   it('uses hidden="until-found" and opens on beforematch', async () => {
     const { root, trigger, panel } = await mountCollapsible({
       root: 'hidden-until-found',

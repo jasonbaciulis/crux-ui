@@ -27,6 +27,6 @@ The uniform grammar every primitive follows (details in API.md):
 - Dynamic control = `x-model` via `x-modelable`; it overrides `default-*` attrs.
 - State out = boolean-presence data-attributes (`data-open` present/absent, never `data-state="…"` values), real ARIA attributes, kebab-case bubbling CustomEvents (`<component>-change` with `detail.value`), and a `$<component>` magic that resolves the nearest root through Alpine's scope chain (not `closest()`).
 
-`src/collapsible.js` is the reference implementation — it proves the whole grammar and is the pattern to copy for new primitives. Internal component state lives in a double-underscore-prefixed `x-data` property (`__collapsible`) so parts reach it via `Alpine.$data(el)`; magic objects are cached per-state in a WeakMap; `console.warn` with a `[crux]` prefix is the misuse-warning channel.
+`src/collapsible.js` is the reference implementation — it proves the whole grammar and is the pattern to copy for new primitives. Internal component state lives in a double-underscore-prefixed `x-data` property (`__collapsible`) so parts reach it via `Alpine.$data(el)`; `console.warn` with a `[Crux UI]` prefix is the misuse-warning channel.
 
 Public contract for semver: directive/part names, config attributes, `data-*` attributes, CSS variables, event names/payloads, magic APIs, model value types. Internal DOM manipulation and core utils are not public API.

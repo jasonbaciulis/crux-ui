@@ -35,6 +35,11 @@ export default defineConfig([
       // a literal `undefined` property reads like it was never declared.
       'unicorn/no-null': 'off',
 
+      // The rule's own rationale is consistency, not correctness. Looking up a
+      // runtime id wants getElementById — exact match, no `#id` escaping — while
+      // hardcoded lookups still read better as selectors and stay flagged.
+      'unicorn/prefer-query-selector': ['error', { allowWithVariables: true }],
+
       // Strictness
       'no-unused-vars': [
         'error',
