@@ -1,0 +1,99 @@
+---
+title: Collapsible
+description: A panel that a trigger opens and closes, with full keyboard and screen-reader support.
+---
+
+import CollapsibleDemo from '../../../components/CollapsibleDemo.astro'
+
+A panel that a trigger opens and closes. The primitive wires all ARIA
+attributes, ids, and keyboard handling — your markup stays plain HTML.
+
+<CollapsibleDemo />
+
+## Usage
+
+```html
+<div x-collapsible>
+  <button x-collapsible:trigger class="group/collapsible-trigger">
+    Advanced options
+    <svg class="group-data-panel-open/collapsible-trigger:rotate-180">…</svg>
+  </button>
+  <div x-collapsible:panel x-collapse hidden>…</div>
+</div>
+```
+
+Ship the panel with the native `hidden` attribute. This prevents a flash of
+open content before Alpine starts. Omit `hidden` when you use
+`default-open`.
+
+## Config attributes
+
+Plain kebab-case attributes on the root. Any server templating engine can
+emit them — no Alpine expressions required.
+
+| Attribute            | Type    | Description                                                                                     |
+| -------------------- | ------- | ----------------------------------------------------------------------------------------------- |
+| `default-open`       | boolean | The panel starts open.                                                                          |
+| `disabled`           | boolean | The trigger ignores user interaction. `x-model` and `$collapsible` still change state.          |
+| `hidden-until-found` | boolean | The closed panel uses `hidden="until-found"`, so browser find-in-page opens it on a text match. |
+
+## Dynamic control
+
+Bind surrounding state with `x-model`. It overrides `default-open` and
+gives two-way binding — the model value is a boolean.
+
+```html
+<div x-data="{ open: false }">
+  <div x-collapsible x-model="open">…</div>
+  <button @click="open = !open">Toggle from outside</button>
+</div>
+```
+
+## Styling
+
+State comes out as boolean-presence data-attributes, targetable from plain
+CSS or Tailwind variants (`data-open:…`). Real ARIA attributes are also
+set, so `aria-*` variants work too.
+
+| Attribute                   | Where         | Meaning                           |
+| --------------------------- | ------------- | --------------------------------- |
+| `data-open` / `data-closed` | root, panel   | present while open / while closed |
+| `data-panel-open`           | trigger       | present while the panel is open   |
+| `data-disabled`             | root, trigger | present when disabled             |
+
+The open panel measures itself into `--collapsible-panel-height` and
+`--collapsible-panel-width` CSS variables.
+
+## Animation
+
+Crux ships no animation. Put Alpine's own `x-collapse` or `x-transition`
+on the panel:
+
+```html
+<div x-collapsible:panel x-collapse hidden>…</div>
+```
+
+## Events
+
+A `collapsible-change` CustomEvent bubbles from the root on every state
+change. `detail.value` is the new boolean state.
+
+```html
+<div x-collapsible @collapsible-change="track($event.detail.value)">…</div>
+```
+
+## Magic
+
+`$collapsible` resolves the nearest root through Alpine's scope chain and
+works on any element inside it.
+
+| API                     | Description          |
+| ----------------------- | -------------------- |
+| `$collapsible.isOpen`   | Reactive open state. |
+| `$collapsible.open()`   | Opens the panel.     |
+| `$collapsible.close()`  | Closes the panel.    |
+| `$collapsible.toggle()` | Toggles the panel.   |
+
+```html
+<button @click="$collapsible.close()">Done</button>
+```
