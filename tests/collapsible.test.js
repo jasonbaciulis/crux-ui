@@ -8,7 +8,7 @@ const flush = () =>
   new Promise((resolve) => {
     setTimeout(resolve, 0)
   })
-const raf = () =>
+const animationFrame = () =>
   new Promise((resolve) => {
     requestAnimationFrame(() => resolve())
   })
@@ -17,7 +17,7 @@ const raf = () =>
 // assertions about a toggled panel's display need to settle through one.
 const settle = async () => {
   await flush()
-  await raf()
+  await animationFrame()
   await flush()
 }
 

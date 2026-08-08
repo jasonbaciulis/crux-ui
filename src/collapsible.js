@@ -1,10 +1,5 @@
-// Config attrs (root): default-open, disabled, hidden-until-found.
-// x-model (boolean) overrides default-open. Event: `collapsible-change`
-// with `detail.value` (the model value type — boolean here), bubbling from
-// the root. Magic: $collapsible.
+const PANEL_ID_SCOPE = 'crux-ui-collapsible-panel'
 
-// Data-state styling contract: boolean presence attributes —
-// present means empty string, absent means removed.
 const openClosedBindings = {
   ':data-open'() {
     return this.__collapsible.open ? '' : false
@@ -20,20 +15,61 @@ const disabledBinding = {
   },
 }
 
+const nativeButtonBindings = {
+  ':disabled'() {
+    return this.__collapsible.disabled
+  },
+}
+
+const buttonRoleBindings = {
+  role: 'button',
+  tabindex: '0',
+  ':aria-disabled'() {
+    return this.__collapsible.disabled ? 'true' : false
+  },
+  '@keydown.enter.prevent'() {
+    this.__collapsible.toggle()
+  },
+  '@keydown.space.prevent'() {
+    this.__collapsible.toggle()
+  },
+}
+
+const displayBinding = {
+  'x-show'() {
+    return this.__collapsible.open
+  },
+}
+
+/**
+ * hidden="until-found" keeps closed content findable by find-in-page,
+ * and it cannot combine with display:none — so this panel gets
+ * no x-show and no JS transitions.
+ */
+const untilFoundBinding = {
+  ':hidden'() {
+    return this.__collapsible.open ? false : 'until-found'
+  },
+}
+
+const partInitializers = { trigger, panel }
+
 const noopApi = { isOpen: false, open() {}, close() {}, toggle() {} }
-const magicApis = new WeakMap()
 
 export default function collapsible(Alpine) {
-  Alpine.directive('collapsible', (el, { value }, { effect, cleanup, evaluate }) => {
-    if (!value) root(el, Alpine)
-    else if (value === 'trigger') trigger(el, Alpine)
-    else if (value === 'panel') panel(el, Alpine, { effect, cleanup, evaluate })
-    else console.warn(`[crux] Unknown part "x-collapsible:${value}"`, el)
-    // Custom directives normally run in the last slot, after the element's
-    // own x-bind/x-show/x-model — user bindings on the root that read
-    // $collapsible would capture a scope without __collapsible and never
-    // recover. Running before `bind` puts the injected x-data first.
-    // x-model still pairs up: x-modelable entangles in a microtask.
+  // Custom directives normally run in the last slot, after the element's own
+  // x-bind/x-show/x-model — root bindings that read $collapsible would capture
+  // a scope without __collapsible and never recover. x-model still pairs up,
+  // because x-modelable entangles in a microtask.
+  Alpine.directive('collapsible', (el, { value }, utilities) => {
+    const initializePart = value ? partInitializers[value] : root
+
+    if (!initializePart) {
+      console.warn(`[crux] Unknown part "x-collapsible:${value}"`, el)
+      return
+    }
+
+    initializePart(el, Alpine, utilities)
   }).before('bind')
 
   Alpine.magic('collapsible', (el) => {
@@ -44,26 +80,23 @@ export default function collapsible(Alpine) {
       return noopApi
     }
 
-    let api = magicApis.get(state)
-
-    if (!api) {
-      api = {
-        get isOpen() {
-          return state.open
-        },
-        open() {
-          state.setOpen(true)
-        },
-        close() {
-          state.setOpen(false)
-        },
-        toggle() {
-          state.toggle()
-        },
-      }
-      magicApis.set(state, api)
+    // These getters must close over the reactive proxy above, never the raw
+    // object that collapsibleState() returns — a raw read gets the right
+    // value but registers no dependency, so nothing re-renders.
+    return {
+      get isOpen() {
+        return state.open
+      },
+      open() {
+        state.setOpen(true)
+      },
+      close() {
+        state.setOpen(false)
+      },
+      toggle() {
+        state.toggle()
+      },
     }
-    return api
   })
 }
 
@@ -71,19 +104,8 @@ function root(el, Alpine) {
   Alpine.bind(el, {
     'x-data'() {
       return {
-        __collapsible: {
-          open: el.hasAttribute('default-open'),
-          disabled: el.hasAttribute('disabled'),
-          untilFound: el.hasAttribute('hidden-until-found'),
-          panelId: null,
-          setOpen(open) {
-            if (this.disabled) return
-            this.open = open
-          },
-          toggle() {
-            this.setOpen(!this.open)
-          },
-        },
+        __collapsible: collapsibleState(el),
+
         init() {
           this.$watch('__collapsible.open', (open) => {
             this.$dispatch('collapsible-change', { value: open })
@@ -91,10 +113,9 @@ function root(el, Alpine) {
         },
       }
     },
-    // Scopes $id('crux-ui-collapsible-panel') calls so trigger and panel
-    // agree on the same generated id, unique per root instance.
+    // Scopes the generated id to this root, so trigger and panel agree on it.
     'x-id'() {
-      return ['crux-ui-collapsible-panel']
+      return [PANEL_ID_SCOPE]
     },
     // Without x-model on the element this is inert (Alpine only entangles
     // when el._x_model exists), so it's safe to bind unconditionally.
@@ -104,12 +125,28 @@ function root(el, Alpine) {
   })
 }
 
+function collapsibleState(el) {
+  return {
+    open: el.hasAttribute('default-open'),
+    disabled: el.hasAttribute('disabled'),
+    untilFound: el.hasAttribute('hidden-until-found'),
+    panelId: null,
+    setOpen(open) {
+      if (this.disabled) return
+      this.open = open
+    },
+    toggle() {
+      this.setOpen(!this.open)
+    },
+  }
+}
+
 function trigger(el, Alpine) {
   const state = closestState(Alpine, el, 'trigger')
   if (!state) return
 
-  const isButton = el.tagName.toLowerCase() === 'button'
-  if (isButton && !el.hasAttribute('type')) el.setAttribute('type', 'button')
+  const isNativeButton = el.tagName.toLowerCase() === 'button'
+  if (isNativeButton && !el.hasAttribute('type')) el.setAttribute('type', 'button')
 
   Alpine.bind(el, {
     ':aria-expanded'() {
@@ -125,25 +162,7 @@ function trigger(el, Alpine) {
     '@click'() {
       this.__collapsible.toggle()
     },
-    ...(isButton
-      ? {
-          ':disabled'() {
-            return this.__collapsible.disabled
-          },
-        }
-      : {
-          role: 'button',
-          tabindex: '0',
-          ':aria-disabled'() {
-            return this.__collapsible.disabled ? 'true' : false
-          },
-          '@keydown.enter.prevent'() {
-            this.__collapsible.toggle()
-          },
-          '@keydown.space.prevent'() {
-            this.__collapsible.toggle()
-          },
-        }),
+    ...(isNativeButton ? nativeButtonBindings : buttonRoleBindings),
   })
 }
 
@@ -151,52 +170,54 @@ function panel(el, Alpine, { effect, cleanup, evaluate }) {
   const state = closestState(Alpine, el, 'panel')
   if (!state) return
 
-  state.panelId = el.id || evaluate("$id('crux-ui-collapsible-panel')")
-  el.id = state.panelId
+  adoptPanelId(el, state, evaluate)
 
   Alpine.bind(el, {
     ...openClosedBindings,
-    ...(state.untilFound
-      ? {
-          // hidden="until-found" keeps closed content findable by the
-          // browser's find-in-page. Incompatible with display:none, so
-          // visibility is managed through the hidden attribute alone —
-          // no x-show, no JS transitions.
-          ':hidden'() {
-            return this.__collapsible.open ? false : 'until-found'
-          },
-        }
-      : {
-          'x-show'() {
-            return this.__collapsible.open
-          },
-        }),
+    ...(state.untilFound ? untilFoundBinding : displayBinding),
   })
 
   if (state.untilFound) {
-    const onMatch = () => {
-      if (state.disabled) {
-        // The browser strips `hidden` after beforematch; a disabled
-        // collapsible must stay closed, so put it back on the next frame.
-        requestAnimationFrame(() => el.setAttribute('hidden', 'until-found'))
-        return
-      }
-      state.setOpen(true)
-    }
-    el.addEventListener('beforematch', onMatch)
-    cleanup(() => el.removeEventListener('beforematch', onMatch))
+    openOnFindInPage(el, state, cleanup)
   } else {
     // Templates ship `hidden` to prevent pre-init flash; x-show has already
     // applied display:none synchronously if closed, so this is safe.
     el.removeAttribute('hidden')
   }
 
-  // Base UI parity: expose the open panel's measured size.
-  let sizeRaf
+  publishPanelSize(el, state, effect, cleanup)
+}
+
+function adoptPanelId(el, state, evaluate) {
+  state.panelId = el.id || evaluate(`$id('${PANEL_ID_SCOPE}')`)
+  el.id = state.panelId
+}
+
+function openOnFindInPage(el, state, cleanup) {
+  const onBeforeMatch = () => {
+    if (state.disabled) {
+      // The browser strips `hidden` after beforematch; a disabled
+      // collapsible must stay closed, so put it back on the next frame.
+      requestAnimationFrame(() => el.setAttribute('hidden', 'until-found'))
+      return
+    }
+    state.setOpen(true)
+  }
+
+  el.addEventListener('beforematch', onBeforeMatch)
+  cleanup(() => el.removeEventListener('beforematch', onBeforeMatch))
+}
+
+/**
+ * Base UI parity: the open panel measures itself into CSS variables.
+ */
+function publishPanelSize(el, state, effect, cleanup) {
+  let measurementFrame
+
   effect(() => {
-    cancelAnimationFrame(sizeRaf)
+    cancelAnimationFrame(measurementFrame)
     if (!state.open) return
-    sizeRaf = requestAnimationFrame(() => {
+    measurementFrame = requestAnimationFrame(() => {
       // Read both dimensions before writing — a write between the two
       // reads would force a second layout pass.
       const { scrollHeight, scrollWidth } = el
@@ -204,7 +225,8 @@ function panel(el, Alpine, { effect, cleanup, evaluate }) {
       el.style.setProperty('--collapsible-panel-width', `${scrollWidth}px`)
     })
   })
-  cleanup(() => cancelAnimationFrame(sizeRaf))
+
+  cleanup(() => cancelAnimationFrame(measurementFrame))
 }
 
 function closestState(Alpine, el, part) {
