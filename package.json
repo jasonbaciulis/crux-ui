@@ -1,64 +1,28 @@
 {
-  "name": "crux-ui",
-  "version": "0.0.1",
-  "description": "Crux UI — headless, unstyled, accessible UI primitives for Alpine.js.",
+  "name": "crux-ui-monorepo",
+  "private": true,
   "type": "module",
-  "main": "src/index.js",
-  "exports": {
-    ".": "./src/index.js",
-    "./collapsible": "./src/collapsible.js",
-    "./package.json": "./package.json"
-  },
-  "files": [
-    "src"
+  "workspaces": [
+    "packages/*",
+    "site"
   ],
   "scripts": {
-    "test": "vitest run",
-    "test:watch": "vitest",
+    "test": "bun run --filter crux-ui test",
+    "test:watch": "bun run --filter crux-ui test:watch",
+    "build": "bun run --filter crux-ui build",
+    "dev": "bun run --filter site dev",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix"
   },
-  "keywords": [
-    "alpinejs",
-    "alpine",
-    "headless",
-    "unstyled",
-    "primitives",
-    "accessibility",
-    "aria",
-    "ui",
-    "components",
-    "dialog",
-    "combobox",
-    "tabs",
-    "popover"
-  ],
-  "author": {
-    "name": "Jason Baciulis",
-    "url": "https://x.com/jasonbaciulis"
-  },
-  "license": "MIT",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/jasonbaciulis/crux-ui.git"
-  },
-  "homepage": "https://crux-ui.com",
-  "peerDependencies": {
-    "alpinejs": "^3.12.0"
-  },
   "devDependencies": {
-    "@alpinejs/collapse": "^3.15.12",
     "@eslint/js": "^10.0.1",
     "@vitest/eslint-plugin": "^1.6.26",
-    "alpinejs": "^3.14.0",
     "eslint": "^10.8.0",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-unicorn": "^73.0.0",
     "globals": "^17.9.0",
-    "jsdom": "^25.0.0",
-    "prettier": "^3.9.6",
-    "vitest": "^3.0.0"
+    "prettier": "^3.9.6"
   }
 }
