@@ -168,6 +168,33 @@ describe('x-collapsible', () => {
     expect(trigger.getAttribute('aria-expanded')).toBe('false')
   })
 
+  // A native button ignores clicks by itself, so a div trigger is the only way
+  // to reach setOpen()'s disabled guard.
+  it('blocks every route into state while disabled', async () => {
+    const root = await mount(`
+      <div x-collapsible disabled>
+        <div x-collapsible:trigger>Toggle</div>
+        <div x-collapsible:panel hidden>Content</div>
+        <button type="button" id="via-magic" @click="$collapsible.open()">Open</button>
+      </div>
+    `)
+    const { trigger } = parts(root)
+
+    expect(trigger.getAttribute('aria-disabled')).toBe('true')
+
+    trigger.click()
+    await flush()
+    expect(root.hasAttribute('data-open')).toBe(false)
+
+    trigger.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }))
+    await flush()
+    expect(root.hasAttribute('data-open')).toBe(false)
+
+    root.querySelector('#via-magic').click()
+    await flush()
+    expect(root.hasAttribute('data-open')).toBe(false)
+  })
+
   it('makes non-button triggers keyboard-operable', async () => {
     const { trigger } = await mountCollapsible({ trigger: 'div' })
 
@@ -261,6 +288,55 @@ describe('x-collapsible', () => {
     expect(panel.getAttribute('hidden')).toBe('until-found')
     expect(trigger.getAttribute('aria-expanded')).toBe('false')
     expect(root.hasAttribute('data-open')).toBe(false)
+  })
+
+  it('warns about an unknown part', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+
+    await mount(`
+      <div x-collapsible>
+        <div x-collapsible:bogus>Nope</div>
+      </div>
+    `)
+
+    expect(warn).toHaveBeenCalledWith(
+      expect.stringContaining('Unknown part "x-collapsible:bogus"'),
+      expect.anything()
+    )
+    warn.mockRestore()
+  })
+
+  it('warns when a part is used outside a root', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+
+    await mount(`<div x-data><button x-collapsible:trigger>Toggle</button></div>`)
+
+    expect(warn).toHaveBeenCalledWith(
+      expect.stringContaining('x-collapsible:trigger must be inside x-collapsible'),
+      expect.anything()
+    )
+    warn.mockRestore()
+  })
+
+  it('exposes an inert $collapsible outside a root', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const root = await mount(`
+      <div x-data>
+        <span x-text="String($collapsible.isOpen)"></span>
+        <button type="button" @click="$collapsible.toggle()">Toggle</button>
+      </div>
+    `)
+
+    expect(root.querySelector('span').textContent).toBe('false')
+
+    root.querySelector('button').click()
+    await flush()
+    expect(root.querySelector('span').textContent).toBe('false')
+    expect(warn).toHaveBeenCalledWith(
+      expect.stringContaining('$collapsible was used outside of x-collapsible'),
+      expect.anything()
+    )
+    warn.mockRestore()
   })
 
   it('composes with x-collapse, which takes over visibility', async () => {
