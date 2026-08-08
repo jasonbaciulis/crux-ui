@@ -21,18 +21,21 @@ const nativeButtonBindings = {
   },
 }
 
+// Gates `disabled` at the button, not in state: activating the
+// trigger does nothing, while x-model and $collapsible still set state.
+function handleTrigger() {
+  if (this.__collapsible.disabled) return
+  this.__collapsible.toggle()
+}
+
 const buttonRoleBindings = {
   role: 'button',
   tabindex: '0',
   ':aria-disabled'() {
     return this.__collapsible.disabled ? 'true' : false
   },
-  '@keydown.enter.prevent'() {
-    this.__collapsible.toggle()
-  },
-  '@keydown.space.prevent'() {
-    this.__collapsible.toggle()
-  },
+  '@keydown.enter.prevent': handleTrigger,
+  '@keydown.space.prevent': handleTrigger,
 }
 
 const displayBinding = {
@@ -130,20 +133,10 @@ function root(el, Alpine) {
 
 function collapsibleState(el) {
   return {
-    // Every write route — clicks, keyboard, $collapsible, x-model — assigns
-    // to `open`, so the disabled guard belongs in its setter and nowhere else.
-    // openValue must stay a property: a closure variable is not reactive.
-    openValue: el.hasAttribute('default-open'),
+    open: el.hasAttribute('default-open'),
     disabled: el.hasAttribute('disabled'),
     untilFound: el.hasAttribute('hidden-until-found'),
     authorPanelId: null,
-    get open() {
-      return this.openValue
-    },
-    set open(open) {
-      if (this.disabled) return
-      this.openValue = open
-    },
     toggle() {
       this.open = !this.open
     },
@@ -168,9 +161,7 @@ function trigger(el, Alpine) {
       return this.__collapsible.open ? '' : false
     },
     ...disabledBinding,
-    '@click'() {
-      this.__collapsible.toggle()
-    },
+    '@click': handleTrigger,
     ...(isNativeButton ? nativeButtonBindings : buttonRoleBindings),
   })
 }

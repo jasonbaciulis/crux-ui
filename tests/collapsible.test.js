@@ -185,7 +185,9 @@ describe('x-collapsible', () => {
     expect(parts(root).trigger.getAttribute('aria-expanded')).toBe('false')
   })
 
-  it('refuses x-model writes while disabled', async () => {
+  // Base UI defines `disabled` as "ignore user interaction", so app-initiated
+  // state still lands and the model can never disagree with the component.
+  it('still follows x-model while disabled', async () => {
     const root = await mount(`
       <div x-data="{ expanded: false }">
         <div x-collapsible disabled x-model="expanded">
@@ -199,8 +201,9 @@ describe('x-collapsible', () => {
 
     root.querySelector('#open-outside').click()
     await settle()
-    expect(collapsible.hasAttribute('data-open')).toBe(false)
-    expect(parts(root).trigger.getAttribute('aria-expanded')).toBe('false')
+    expect(collapsible.hasAttribute('data-open')).toBe(true)
+    expect(parts(root).trigger.getAttribute('aria-expanded')).toBe('true')
+    expect(collapsible.hasAttribute('data-disabled')).toBe(true)
   })
 
   it('initializes state before user bindings on the root element', async () => {
@@ -231,13 +234,12 @@ describe('x-collapsible', () => {
   })
 
   // A native button ignores clicks by itself, so a div trigger is the only way
-  // to reach setOpen()'s disabled guard.
-  it('blocks every route into state while disabled', async () => {
+  // to reach the disabled guard on the interaction handlers.
+  it('ignores user interaction while disabled', async () => {
     const root = await mount(`
       <div x-collapsible disabled>
         <div x-collapsible:trigger>Toggle</div>
         <div x-collapsible:panel hidden>Content</div>
-        <button type="button" id="via-magic" @click="$collapsible.open()">Open</button>
       </div>
     `)
     const { trigger } = parts(root)
@@ -252,9 +254,24 @@ describe('x-collapsible', () => {
     await flush()
     expect(root.hasAttribute('data-open')).toBe(false)
 
-    root.querySelector('#via-magic').click()
+    trigger.dispatchEvent(new KeyboardEvent('keydown', { key: ' ', bubbles: true }))
     await flush()
     expect(root.hasAttribute('data-open')).toBe(false)
+  })
+
+  it('still obeys $collapsible while disabled', async () => {
+    const root = await mount(`
+      <div x-collapsible disabled>
+        <button x-collapsible:trigger>Toggle</button>
+        <div x-collapsible:panel hidden>Content</div>
+        <button type="button" id="via-magic" @click="$collapsible.open()">Open</button>
+      </div>
+    `)
+
+    root.querySelector('#via-magic').click()
+    await flush()
+    expect(root.hasAttribute('data-open')).toBe(true)
+    expect(parts(root).trigger.getAttribute('aria-expanded')).toBe('true')
   })
 
   it('makes non-button triggers keyboard-operable', async () => {

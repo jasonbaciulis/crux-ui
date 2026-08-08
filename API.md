@@ -62,9 +62,9 @@ directly (`default-value="{{ first_slug }}"`).
 
 - Boolean options are bare attributes (`multiple`, `default-open`).
 - Multi-value strings are comma-separated (`default-value="a, b"`).
-- `disabled` on the root disables the whole component; on an item/trigger it
-  disables that item — skipped in keyboard navigation, reflected as
-  `aria-disabled` + `data-disabled`.
+- `disabled` on the root makes the whole component ignore user interaction;
+  on an item/trigger it disables that item — skipped in keyboard navigation,
+  reflected as `aria-disabled` + `data-disabled`.
 - `hidden-until-found` on the root (Base UI's `hiddenUntilFound`): closed
   panels use `hidden="until-found"` so browser find-in-page (Cmd+F) can
   match text inside them — the package listens for `beforematch` and opens
@@ -95,10 +95,11 @@ binding for the cases where surrounding state matters:
 Model value types: accordion → array of item values; tabs → string;
 dialog/popover → boolean.
 
-`disabled` outranks the model. A disabled root refuses every state change,
-including a write from the bound variable, so the variable can hold a value
-the component declines to take. Read the component's state from its
-`data-*` attributes or its magic, not from the model, while it is disabled.
+`disabled` and the model do not compete. Following Base UI, `disabled` makes
+a component ignore _user interaction_ — clicks, keys, find-in-page — while
+app-initiated state still lands. A disabled root therefore still follows its
+`x-model` and its magic, and the bound variable can never disagree with what
+the component shows.
 
 ### 4. State out: data-attributes, magics, events
 
