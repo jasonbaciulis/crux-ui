@@ -1,0 +1,46 @@
+---
+import { Code } from '@astrojs/starlight/components'
+
+const { code, lang = 'html', align = 'center' } = Astro.props
+
+const fullCode = code.trim()
+const sourcePreviewCode = fullCode.split('\n').slice(0, 3).join('\n')
+---
+
+<div
+  data-slot="component-preview"
+  class="not-content group relative mt-4 mb-12 flex flex-col overflow-hidden rounded-2xl border border-border"
+>
+  <div data-slot="preview">
+    <div
+      data-align={align}
+      class="preview relative flex h-72 w-full justify-center p-10 data-[align=center]:items-center data-[align=end]:items-start data-[align=start]:items-start sm:data-[align=end]:items-end"
+    >
+      <slot />
+    </div>
+  </div>
+
+  <div
+    x-data="{ codeVisible: false }"
+    :data-code-visible="codeVisible"
+    data-slot="code"
+    class="relative overflow-hidden border-t border-border [&_pre]:max-h-72"
+  >
+    <div x-show="codeVisible" x-cloak>
+      <Code code={fullCode} lang={lang} />
+    </div>
+    <div x-show="!codeVisible" class="relative [&_.copy]:hidden">
+      <Code code={sourcePreviewCode} lang={lang} />
+      <div class="absolute inset-0 flex items-center justify-center pb-4">
+        <div class="absolute inset-0 bg-linear-to-t from-code via-code/60 to-transparent"></div>
+        <button
+          type="button"
+          @click="codeVisible = true"
+          class="sl-link-button secondary relative z-10"
+        >
+          View Code
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

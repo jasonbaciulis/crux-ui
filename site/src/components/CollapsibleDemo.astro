@@ -1,64 +1,25 @@
-<div class="demo not-content">
-  <div x-collapsible>
-    <button x-collapsible:trigger class="demo-trigger">
-      Advanced options
-      <svg
-        class="demo-icon"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        stroke-width="2"
-        aria-hidden="true"
-      >
-        <polyline points="6 9 12 15 18 9"></polyline>
-      </svg>
-    </button>
-    <div x-collapsible:panel x-collapse hidden class="demo-panel">
-      <p>
-        This panel is a live Crux UI collapsible. The trigger carries real
-        <code>aria-expanded</code> and <code>aria-controls</code> attributes, and the chevron is
-        styled with a plain CSS <code>[data-panel-open]</code> selector.
-      </p>
-    </div>
+<div x-data x-collapsible class="w-full max-w-sm">
+  <button
+    x-collapsible:trigger
+    class="group/trigger flex cursor-pointer items-center gap-2 py-1 font-semibold text-foreground"
+  >
+    Advanced options
+    <svg
+      class="size-4 transition-transform group-data-panel-open/trigger:rotate-180"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2"
+      aria-hidden="true"
+    >
+      <polyline points="6 9 12 15 18 9"></polyline>
+    </svg>
+  </button>
+  <div x-collapsible:panel x-collapse hidden class="text-muted-foreground">
+    <p class="pt-2">
+      This panel is a live Crux UI collapsible. The trigger carries real
+      <code>aria-expanded</code> and <code>aria-controls</code> attributes, and the chevron is
+      styled with a plain <code>data-panel-open</code> Tailwind variant.
+    </p>
   </div>
 </div>
-
-<style>
-  .demo {
-    border: 1px solid var(--sl-color-gray-5);
-    border-radius: 0.5rem;
-    padding: 1rem 1.25rem;
-  }
-
-  .demo-trigger {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.25rem 0;
-    border: 0;
-    background: none;
-    color: var(--sl-color-white);
-    font: inherit;
-    font-weight: 600;
-    cursor: pointer;
-  }
-
-  .demo-icon {
-    width: 1rem;
-    height: 1rem;
-    transition: transform 0.2s;
-  }
-
-  .demo-trigger[data-panel-open] .demo-icon {
-    transform: rotate(180deg);
-  }
-
-  .demo-panel {
-    margin-top: 0.5rem;
-    color: var(--sl-color-gray-2);
-  }
-
-  .demo-panel code {
-    font-size: 0.85em;
-  }
-</style>

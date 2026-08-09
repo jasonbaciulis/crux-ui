@@ -12,11 +12,17 @@
   },
   "dependencies": {
     "@alpinejs/collapse": "^3.14.0",
-    "@astrojs/alpinejs": "^1.0.0",
     "@astrojs/starlight": "^0.41.7",
+    "@astrojs/starlight-tailwind": "^5.0.0",
+    "@expressive-code/plugin-line-numbers": "^0.44.1",
+    "@fontsource-variable/geist": "^5.3.0",
+    "@fontsource-variable/geist-mono": "^5.3.0",
+    "@tailwindcss/vite": "^4.3.3",
     "alpinejs": "^3.14.0",
     "astro": "^7.1.6",
     "crux-ui": "workspace:*",
-    "sharp": "^0.35.3"
+    "sharp": "^0.35.3",
+    "starlight-theme-black": "^0.7.1",
+    "tailwindcss": "^4.3.3"
   }
 }

@@ -1,19 +1,20 @@
 ---
 title: Collapsible
-description: A panel that a trigger opens and closes, with full keyboard and screen-reader support.
+description: An interactive component which expands/collapses a panel.
 ---
 
+import ComponentPreview from '../../../components/ComponentPreview.astro'
 import CollapsibleDemo from '../../../components/CollapsibleDemo.astro'
+import collapsibleDemoSource from '../../../components/CollapsibleDemo.astro?raw'
 
-A panel that a trigger opens and closes. The primitive wires all ARIA
-attributes, ids, and keyboard handling — your markup stays plain HTML.
-
-<CollapsibleDemo />
+<ComponentPreview code={collapsibleDemoSource}>
+  <CollapsibleDemo />
+</ComponentPreview>
 
 ## Usage
 
 ```html
-<div x-collapsible>
+<div x-data x-collapsible>
   <button x-collapsible:trigger class="group/collapsible-trigger">
     Advanced options
     <svg class="group-data-panel-open/collapsible-trigger:rotate-180">…</svg>
@@ -21,6 +22,10 @@ attributes, ids, and keyboard handling — your markup stays plain HTML.
   <div x-collapsible:panel x-collapse hidden>…</div>
 </div>
 ```
+
+The bare `x-data` marks the root as an Alpine component — Alpine only
+initializes markup inside `x-data`. When the root already sits inside
+another `x-data` element, its own `x-data` is unnecessary.
 
 Ship the panel with the native `hidden` attribute. This prevents a flash of
 open content before Alpine starts. Omit `hidden` when you use
@@ -79,7 +84,7 @@ A `collapsible-change` CustomEvent bubbles from the root on every state
 change. `detail.value` is the new boolean state.
 
 ```html
-<div x-collapsible @collapsible-change="track($event.detail.value)">…</div>
+<div x-data x-collapsible @collapsible-change="track($event.detail.value)">…</div>
 ```
 
 ## Magic
