@@ -31,7 +31,7 @@ Each primitive is one module in `packages/crux-ui/src/<name>.js` exporting `(Alp
 
 The uniform grammar every primitive follows (details in API.md):
 
-- One directive per component; parts are the directive argument (`x-accordion`, `x-accordion:trigger`). Part names follow Base UI vocabulary.
+- One directive per component; parts are the directive argument (`x-accordion`, `x-accordion:trigger`). Part names follow Base UI vocabulary. Root markup always pairs the directive with a bare `x-data` (`<div x-data x-collapsible>`) — Alpine's initial scan visits only `[x-data]`/`[x-init]` elements, so a server-rendered root without it (and without an `x-data` ancestor) silently never initializes (regression-tested in `tests/prerendered-init.test.js`).
 - Static config = plain kebab-case attributes on the root (`default-open`, `multiple`), readable by any server templating engine — no Alpine expressions required.
 - Dynamic control = `x-model` via `x-modelable`; it overrides `default-*` attrs.
 - State out = boolean-presence data-attributes (`data-open` present/absent, never `data-state="…"` values), real ARIA attributes, kebab-case bubbling CustomEvents (`<component>-change` with `detail.value`), and a `$<component>` magic that resolves the nearest root through Alpine's scope chain (not `closest()`).
