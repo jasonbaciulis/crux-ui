@@ -26,7 +26,7 @@ const sourcePreviewCode = fullCode.split('\n').slice(0, 3).join('\n')
     x-data
     x-collapsible
     data-closed
-    class="group/code relative overflow-hidden border-t border-border [&_pre]:max-h-72"
+    class="group/code relative overflow-hidden border-t border-border [&_.frame]:rounded-none! [&_pre]:max-h-72 [&_pre]:rounded-none!"
   >
     <div x-collapsible:panel hidden>
       <Code code={fullCode} lang={lang} />

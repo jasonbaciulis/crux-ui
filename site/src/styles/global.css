@@ -98,29 +98,9 @@
   --radius-2xl: calc(var(--radius) + 8px);
 }
 
-/* Code blocks — match shadcn/ui docs (14px, 1.75 line height, --code surface, no frame border).
-   The --ec-* properties are Expressive Code's config API; no utilities exist for them. */
-:root .expressive-code {
-  --ec-codePadBlk: calc(var(--spacing) * 3.5);
-  --ec-codePadInl: calc(var(--spacing) * 4);
-  --ec-codeBg: var(--color-code);
-  --ec-frm-edBg: var(--color-code);
-  --ec-brdWd: 0px;
-  --ec-brdRad: var(--radius-2xl);
-  --ec-gtrFg: var(--color-code-number);
-  --ec-gtrBrdWd: 0px;
-}
-
-/* Also covers starlight-theme-black's 0.933em token shrink — shadcn tokens match the pre size */
+/* Code block styling lives in ec.config.mjs styleOverrides; here stays only what that
+   API cannot do. Fonts: starlight-theme-black's rules (incl. a 0.933em token shrink)
+   override Expressive Code's font settings, so the shadcn type scale is enforced here. */
 :root .expressive-code :is(pre, pre *) {
   @apply font-mono text-sm leading-[1.75];
-}
-
-:root .expressive-code .gutter .ln {
-  @apply box-border w-16 ps-0 pe-6;
-}
-
-/* Inside a component preview the code section is flush with the frame */
-[data-slot='code'] .expressive-code {
-  --ec-brdRad: 0px;
 }
