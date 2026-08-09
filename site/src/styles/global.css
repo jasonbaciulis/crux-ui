@@ -98,11 +98,6 @@
   --radius-2xl: calc(var(--radius) + 8px);
 }
 
-/* Alpine hides x-show elements only after it boots; x-cloak covers the gap */
-[x-cloak] {
-  @apply hidden!;
-}
-
 /* Code blocks — match shadcn/ui docs (14px, 1.75 line height, --code surface, no frame border).
    The --ec-* properties are Expressive Code's config API; no utilities exist for them. */
 :root .expressive-code {

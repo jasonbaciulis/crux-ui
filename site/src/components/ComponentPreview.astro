@@ -20,27 +20,27 @@ const sourcePreviewCode = fullCode.split('\n').slice(0, 3).join('\n')
     </div>
   </div>
 
+  {/* data-closed is authored so the closed-state styles hold before Alpine boots */}
   <div
-    x-data="{ codeVisible: false }"
-    :data-code-visible="codeVisible"
     data-slot="code"
-    class="relative overflow-hidden border-t border-border [&_pre]:max-h-72"
+    x-data
+    x-collapsible
+    data-closed
+    class="group/code relative overflow-hidden border-t border-border [&_pre]:max-h-72"
   >
-    <div x-show="codeVisible" x-cloak>
+    <div x-collapsible:panel hidden>
       <Code code={fullCode} lang={lang} />
     </div>
-    <div x-show="!codeVisible" class="relative [&_.copy]:hidden">
+    <div class="relative group-data-open/code:hidden [&_.copy]:hidden" aria-hidden="true">
       <Code code={sourcePreviewCode} lang={lang} />
-      <div class="absolute inset-0 flex items-center justify-center pb-4">
-        <div class="absolute inset-0 bg-linear-to-t from-code via-code/60 to-transparent"></div>
-        <button
-          type="button"
-          @click="codeVisible = true"
-          class="sl-link-button secondary relative z-10"
-        >
-          View Code
-        </button>
-      </div>
+      <div class="absolute inset-0 bg-linear-to-t from-code via-code/60 to-transparent"></div>
+    </div>
+    <div
+      class="absolute inset-0 flex items-center justify-center pb-4 group-data-open/code:hidden"
+    >
+      <button x-collapsible:trigger class="sl-link-button secondary relative z-10">
+        View Code
+      </button>
     </div>
   </div>
 </div>
