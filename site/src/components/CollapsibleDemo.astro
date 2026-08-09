@@ -1,25 +1,35 @@
-<div x-data x-collapsible class="w-full max-w-sm">
-  <button
-    x-collapsible:trigger
-    class="group/trigger flex cursor-pointer items-center gap-2 py-1 font-semibold text-foreground"
-  >
-    Advanced options
-    <svg
-      class="size-4 transition-transform group-data-panel-open/trigger:rotate-180"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      stroke-width="2"
-      aria-hidden="true"
-    >
-      <polyline points="6 9 12 15 18 9"></polyline>
-    </svg>
-  </button>
-  <div x-collapsible:panel x-collapse hidden class="text-muted-foreground">
-    <p class="pt-2">
-      This panel is a live Crux UI collapsible. The trigger carries real
-      <code>aria-expanded</code> and <code>aria-controls</code> attributes, and the chevron is
-      styled with a plain <code>data-panel-open</code> Tailwind variant.
-    </p>
+<div
+  class="mx-auto flex w-full max-w-sm flex-col gap-(--card-spacing) rounded-xl bg-card py-(--card-spacing) text-sm text-card-foreground ring-1 ring-foreground/10 [--card-spacing:--spacing(4)]"
+>
+  <div class="px-(--card-spacing)">
+    <div x-data x-collapsible class="rounded-md data-open:bg-muted">
+      <button
+        x-collapsible:trigger
+        class="group/button inline-flex h-8 w-full shrink-0 items-center justify-center gap-1.5 rounded-lg border border-transparent bg-clip-padding px-2.5 text-sm font-medium whitespace-nowrap transition-all outline-none select-none hover:bg-muted hover:text-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 active:translate-y-px disabled:pointer-events-none disabled:opacity-50 aria-expanded:bg-muted aria-expanded:text-foreground dark:hover:bg-muted/50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4"
+      >
+        Product details
+        <svg
+          class="ml-auto group-data-panel-open/button:rotate-180"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+        >
+          <path d="m6 9 6 6 6-6"></path>
+        </svg>
+      </button>
+      <div x-collapsible:panel hidden class="flex flex-col items-start gap-2 p-2.5 pt-0 text-sm">
+        <div>This panel can be expanded or collapsed to reveal additional content.</div>
+        <button
+          type="button"
+          class="inline-flex h-6 shrink-0 items-center justify-center gap-1 rounded-[min(var(--radius-md),10px)] border border-transparent bg-primary bg-clip-padding px-2 text-xs font-medium whitespace-nowrap text-primary-foreground transition-all outline-none select-none hover:bg-primary/80 focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 active:translate-y-px disabled:pointer-events-none disabled:opacity-50"
+        >
+          Learn More
+        </button>
+      </div>
+    </div>
   </div>
 </div>

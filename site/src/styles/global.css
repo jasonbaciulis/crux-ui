@@ -5,6 +5,9 @@
 @import 'tailwindcss/theme.css' layer(theme);
 @import 'tailwindcss/utilities.css' layer(utilities);
 
+/* Starlight switches themes via data-theme, not the .dark class shadcn assumes */
+@custom-variant dark (&:where([data-theme='dark'], [data-theme='dark'] *));
+
 :root {
   /* starlight-theme-black points --sl-font at these hooks but leaves them undefined */
   --font-geist: 'Geist Variable', ui-sans-serif, system-ui, sans-serif;
