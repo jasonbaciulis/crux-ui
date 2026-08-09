@@ -104,3 +104,22 @@
 :root .expressive-code :is(pre, pre *) {
   @apply font-mono text-sm leading-[1.75];
 }
+
+/* No Expressive Code setting exists for copy button size (hardcoded 2-2.5rem) */
+:root .expressive-code .copy button {
+  @apply size-7;
+}
+
+/* keeps line numbers sticky while the code scrolls beneath them */
+:root .expressive-code .gutter {
+  @apply sticky inset-s-0 z-10 bg-code;
+}
+
+/* hides code scrollbars entirely; the block stays scrollable */
+:root .expressive-code pre {
+  @apply scrollbar-none;
+}
+
+:root .expressive-code pre::-webkit-scrollbar {
+  @apply hidden;
+}
