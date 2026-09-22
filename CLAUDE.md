@@ -2,7 +2,7 @@
 
 ## What this is
 
-Crux UI (`crux-ui` on npm) — headless, unstyled, accessible UI primitives for Alpine.js, the "Base UI for AlpineJS". This repo is the npm package only. The two upper layers of the plan — the shadcn-style component registry (Blade + Antlers) and the docs site (crux-ui.com, Laravel + laradocs) — live in the separate `crux-ui.com` repo; see `plans/PLAN.md` for the roadmap and decision log and `plans/docs-repo-layout.md` for that repo's layout. **`API.md` is the v1 API spec** — directive grammar, config attributes, data-attribute styling contract, events, magics, and the build order for upcoming primitives. Read it before adding or changing any primitive. If you have better suggestions, feel free to push back on it.
+Crux UI (`crux-ui` on npm) — headless, unstyled, accessible UI primitives for Alpine.js, the "Base UI for AlpineJS". This repo is the npm package only. The upper layers live in the sibling `crux-ui.com` repo: the Laravel + laradocs docs site, the Blade/Antlers component registry source and its JSON build, and the `crux-ui/statamic` Composer package with the `php artisan crux:add` install command (`packages/crux-ui-statamic`); see `plans/PLAN.md` for the roadmap and decision log and `plans/docs-repo-layout.md` for that repo's layout. **`API.md` is the v1 API spec** — directive grammar, config attributes, data-attribute styling contract, events, magics, and the build order for upcoming primitives. Read it before adding or changing any primitive. If you have better suggestions, feel free to push back on it.
 
 ## Commands
 
