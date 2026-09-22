@@ -8,6 +8,9 @@
 /* Starlight switches themes via data-theme, not the .dark class shadcn assumes */
 @custom-variant dark (&:where([data-theme='dark'], [data-theme='dark'] *));
 
+/* Registry components live outside the Vite root, where Tailwind does not scan */
+@source '../../../registry/astro';
+
 :root {
   /* starlight-theme-black points --sl-font at these hooks but leaves them undefined */
   --font-geist: 'Geist Variable', ui-sans-serif, system-ui, sans-serif;
@@ -69,6 +72,7 @@
 @theme inline {
   --font-sans: var(--font-geist);
   --font-mono: var(--font-geist-mono);
+  --font-heading: var(--font-geist);
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -99,6 +103,14 @@
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
   --radius-2xl: calc(var(--radius) + 8px);
+}
+
+/* Upstream ships cn-* classes as opt-in styling hooks; this mirrors the
+   definition in ui.shadcn.com's apps/v4/app/globals.css. */
+@layer base {
+  .cn-font-heading {
+    @apply font-heading;
+  }
 }
 
 /* Code block styling lives in ec.config.mjs styleOverrides; here stays only what that

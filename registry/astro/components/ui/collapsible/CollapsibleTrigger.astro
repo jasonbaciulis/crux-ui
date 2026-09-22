@@ -1,0 +1,18 @@
+---
+interface Props {
+  class?: string
+  [attribute: string]: unknown
+}
+
+const { class: className, ...rest } = Astro.props
+---
+
+<button
+  type="button"
+  x-collapsible:trigger
+  data-slot="collapsible-trigger"
+  class={className}
+  {...rest}
+>
+  <slot />
+</button>

@@ -1,13 +1,13 @@
 ---
-import Default from '@astrojs/starlight/components/Head.astro'
+import Default from "@astrojs/starlight/components/Head.astro"
 ---
 
 <Default><slot /></Default>
 
 <script>
-  import Alpine from 'alpinejs'
-  import collapse from '@alpinejs/collapse'
-  import CruxUI from 'crux-ui'
+  import Alpine from "alpinejs"
+  import collapse from "@alpinejs/collapse"
+  import CruxUI from "crux-ui"
 
   // Boot Alpine directly instead of via @astrojs/alpinejs: its
   // DOMContentLoaded listener registers too late under Vite's dev-mode

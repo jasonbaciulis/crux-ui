@@ -15,6 +15,9 @@ export default defineConfig({
         // Resolve to package source instead of the exports-mapped dist/,
         // so demos pick up src edits without a package rebuild.
         'crux-ui': fileURLToPath(new URL('../packages/crux-ui/src/index.js', import.meta.url)),
+        // `@` mirrors the shadcn-style alias users get after `shadcn add`,
+        // so demos import registry components exactly as user code would.
+        '@': fileURLToPath(new URL('../registry/astro', import.meta.url)),
       },
     },
   },
@@ -38,6 +41,10 @@ export default defineConfig({
         Head: './src/components/Head.astro',
       },
       sidebar: [
+        {
+          label: 'Guides',
+          items: [{ label: 'Composition', slug: 'guides/composition' }],
+        },
         {
           label: 'Components',
           items: [{ label: 'Collapsible', slug: 'components/collapsible' }],

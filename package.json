@@ -4,6 +4,7 @@
   "type": "module",
   "workspaces": [
     "packages/*",
+    "registry",
     "site"
   ],
   "scripts": {
@@ -11,6 +12,9 @@
     "test:watch": "bun run --filter crux-ui test:watch",
     "build": "bun run --filter crux-ui build",
     "dev": "bun run --filter site dev",
+    "registry:build": "bun run --filter crux-registry build",
+    "registry:sync": "node registry/sync-shadcn.mjs fetch",
+    "registry:bake": "node registry/sync-shadcn.mjs bake && prettier --write registry/astro",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "lint": "eslint .",
@@ -23,6 +27,7 @@
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-unicorn": "^73.0.0",
     "globals": "^17.9.0",
-    "prettier": "^3.9.6"
+    "prettier": "^3.9.6",
+    "prettier-plugin-astro": "^0.14.1"
   }
 }

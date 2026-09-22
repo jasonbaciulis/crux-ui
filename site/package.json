@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "astro dev",
     "start": "astro dev",
-    "build": "astro build",
+    "build": "bun run --filter crux-registry build && astro build",
     "preview": "astro preview",
     "astro": "astro"
   },
@@ -17,6 +17,7 @@
     "@expressive-code/plugin-line-numbers": "^0.44.1",
     "@fontsource-variable/geist": "^5.3.0",
     "@fontsource-variable/geist-mono": "^5.3.0",
+    "@lucide/astro": "^1.30.0",
     "@tailwindcss/vite": "^4.3.3",
     "alpinejs": "^3.14.0",
     "astro": "^7.1.6",

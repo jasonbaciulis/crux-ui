@@ -1,0 +1,65 @@
+---
+title: Composition
+description: Combine Crux behavior with your own styled components — no asChild or render prop required.
+---
+
+React component libraries need a cloning mechanism for composition —
+Radix's `asChild`, Base UI's `render` prop. Behavior lives in components
+there, so two components must merge onto one DOM element.
+
+Crux behavior lives in directives, and a directive is a plain HTML
+attribute. Any element can carry it — including the root element of a
+styled component. That makes composition a spread, not a mechanism.
+
+## Put the part directive on your component
+
+To turn a styled button into a collapsible trigger, add the trigger
+directive to it:
+
+```astro
+<Collapsible>
+  <Button x-collapsible:trigger variant="ghost">Product details</Button>
+  <CollapsiblePanel>…</CollapsiblePanel>
+</Collapsible>
+```
+
+This replaces the bare `CollapsibleTrigger` part completely. The directive
+carries all behavior: it wires the ARIA attributes, sets `type="button"`
+on native buttons, and exposes the `data-panel-open` styling hook.
+
+The only contract: the component must spread unknown attributes onto its
+root element. Every Crux registry component does.
+
+```astro
+<button data-slot="button" class={cn(buttonVariants({ variant, size }), className)} {...rest}>
+  <slot />
+</button>
+```
+
+The pattern is not tied to Astro. Blade components forward unknown
+attributes through `$attributes`, and any templating engine that echoes
+attributes composes the same way.
+
+## Render as a different element
+
+`Button` accepts an `as` prop for the cases where button styling belongs
+on another element, such as a link:
+
+```astro
+<Button as="a" href="/pricing" variant="outline">See pricing</Button>
+```
+
+`as` defaults to `button` and takes any tag name.
+
+## Use the classes without the component
+
+For markup you cannot render through `Button` at all, import the variant
+factory and apply the classes directly:
+
+```astro
+---
+import { buttonVariants } from '@/components/ui/button'
+---
+
+<a class={buttonVariants({ variant: 'outline' })} href="/pricing">See pricing</a>
+```

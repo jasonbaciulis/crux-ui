@@ -1,10 +1,10 @@
 ---
-import { Code } from '@astrojs/starlight/components'
+import { Code } from "@astrojs/starlight/components"
 
-const { code, lang = 'html', align = 'center' } = Astro.props
+const { code, lang = "html", align = "center" } = Astro.props
 
 const fullCode = code.trim()
-const sourcePreviewCode = fullCode.split('\n').slice(0, 3).join('\n')
+const sourcePreviewCode = fullCode.split("\n").slice(0, 3).join("\n")
 ---
 
 <div
@@ -35,9 +35,7 @@ const sourcePreviewCode = fullCode.split('\n').slice(0, 3).join('\n')
       <Code code={sourcePreviewCode} lang={lang} />
       <div class="absolute inset-0 bg-linear-to-t from-code via-code/60 to-transparent"></div>
     </div>
-    <div
-      class="absolute inset-0 flex items-center justify-center pb-4 group-data-open/code:hidden"
-    >
+    <div class="absolute inset-0 flex items-center justify-center pb-4 group-data-open/code:hidden">
       <button x-collapsible:trigger class="sl-link-button secondary relative z-10">
         View Code
       </button>

@@ -1,0 +1,16 @@
+---
+interface Props {
+  class?: string
+  hidden?: boolean | "until-found"
+  [attribute: string]: unknown
+}
+
+const { class: className, hidden = true, ...rest } = Astro.props
+---
+
+{
+  /* Server-renders the native hidden attribute so a closed panel cannot flash open before Alpine starts; the primitive takes it over on init. Pass hidden={false} when the root has default-open, or hidden='until-found' when it has hidden-until-found. */
+}
+<div x-collapsible:panel data-slot="collapsible-panel" hidden={hidden} class={className} {...rest}>
+  <slot />
+</div>
