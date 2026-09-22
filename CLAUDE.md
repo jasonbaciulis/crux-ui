@@ -2,32 +2,24 @@
 
 ## What this is
 
-Crux UI (`crux-ui` on npm) — headless, unstyled, accessible UI primitives for Alpine.js, the "Base UI for AlpineJS". This monorepo holds all three layers of the plan (primitives package → shadcn-style component registry → docs site); see `plans/PLAN.md` for the roadmap and decision log. **`API.md` is the v1 API spec** — directive grammar, config attributes, data-attribute styling contract, events, magics, and the build order for upcoming primitives. Read it before adding or changing any primitive. If you have better suggestions, feel free to push back on it.
-
-Layout (bun workspaces, no turborepo): `packages/crux-ui` — the npm package; `site/` — Astro + Starlight docs site (crux-ui.com, Vercel root directory `site/`); `registry/` — component registry source (layer 2; `astro/` namespace live, Blade/Antlers planned), compiled by `bun run registry:build` (official `shadcn build`) to `site/public/r/{stack}/` as universal registry items — every file has an explicit `target` and installs verbatim, which is why registry sources import `@/lib/utils` and mirror the installed layout. The site's `@` alias points at `registry/astro`, so docs demos consume the exact files users install. Class strings are NOT hand-written: `bun run registry:sync` pulls shadcn base-nova sources through the official `shadcn/registry` API (`getRegistryItems`; local items enumerate via `loadRegistry`, and an item opts into syncing by naming its upstream source in `meta.upstream` in `registry/astro/registry.json`) into committed snapshots (`registry/upstream/*.tsx`, fetch executes nothing); after reviewing the snapshot diff, `bun run registry:bake` locates class data in the snapshots (TypeScript AST, nothing executes) and transplants the verbatim upstream source text in place into the shipped component sources — the `cva(...)` arguments in the file containing a cva call, and the `cn(...)` first string of each file whose name matches a snapshot export (`CardHeader.astro` ← `CardHeader`); the port is verbatim with no overrides layer — upstream's `cn-*` classes ship as opt-in styling hooks (defined for the docs site in `site/src/styles/global.css`, mirroring ui.shadcn.com's globals.css); never edit baked class strings by hand (bake stomps them), and CI re-runs bake and fails on any diff, so parity with the snapshots is machine-checked.
+Crux UI (`crux-ui` on npm) — headless, unstyled, accessible UI primitives for Alpine.js, the "Base UI for AlpineJS". This repo is the npm package only. The two upper layers of the plan — the shadcn-style component registry (Blade + Antlers) and the docs site (crux-ui.com, Laravel + laradocs) — live in the separate `crux-ui.com` repo; see `plans/PLAN.md` for the roadmap and decision log and `plans/docs-repo-layout.md` for that repo's layout. **`API.md` is the v1 API spec** — directive grammar, config attributes, data-attribute styling contract, events, magics, and the build order for upcoming primitives. Read it before adding or changing any primitive. If you have better suggestions, feel free to push back on it.
 
 ## Commands
 
 Bun is the package manager (`bun.lock`, CI uses bun); scripts also work with npm.
 
-From the repo root:
-
-- `bun install` — install all workspace dependencies
-- `bun run test` — run all package tests once (vitest, jsdom environment)
+- `bun install` — install dependencies
+- `bun run test` — run all tests once (vitest, jsdom environment)
 - `bun run test:watch` — vitest watch mode
-- `bun run build` — build the npm package (esbuild → `packages/crux-ui/dist`)
-- `bun run dev` — Astro dev server for the docs site
-- `bun run lint` / `bun run lint:fix` — ESLint (site is excluded)
+- `bun run build` — build the package (esbuild → `dist/`)
+- `bun run lint` / `bun run lint:fix` — ESLint
 - `bun run format` / `bun run format:check` — Prettier
-
-From `packages/crux-ui/`:
-
 - `bunx vitest run tests/collapsible.test.js` — run a single test file
 - `bunx vitest run -t "respects default-open"` — run a single test by name
 
 ## Architecture
 
-Each primitive is one module in `packages/crux-ui/src/<name>.js` exporting `(Alpine) => void` that registers one directive + one magic. `src/index.js` is the default plugin registering all primitives; per-primitive entries are exposed via package.json `exports` for bundle-conscious users. Shared behavior with no Alpine primitive (roving focus, dismiss layering, focus trap, Floating UI positioning) will live in `src/core/` — everything else must reuse Alpine's own machinery: `x-id`/`$id` for ids, `$dispatch` for events, `$watch` for change tracking, `x-modelable` for `x-model`, `Alpine.bind` for applying bindings, `x-collapse`/`x-transition` for animation (Crux ships no animation of its own).
+Each primitive is one module in `src/<name>.js` exporting `(Alpine) => void` that registers one directive + one magic. `src/index.js` is the default plugin registering all primitives; per-primitive entries are exposed via package.json `exports` for bundle-conscious users. Shared behavior with no Alpine primitive (roving focus, dismiss layering, focus trap, Floating UI positioning) will live in `src/core/` — everything else must reuse Alpine's own machinery: `x-id`/`$id` for ids, `$dispatch` for events, `$watch` for change tracking, `x-modelable` for `x-model`, `Alpine.bind` for applying bindings, `x-collapse`/`x-transition` for animation (Crux ships no animation of its own).
 
 The uniform grammar every primitive follows (details in API.md):
 

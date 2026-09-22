@@ -1,33 +1,69 @@
 {
-  "name": "crux-ui-monorepo",
-  "private": true,
+  "name": "crux-ui",
+  "version": "0.0.1",
+  "description": "Crux UI \u2014 headless, unstyled, accessible UI primitives for Alpine.js.",
   "type": "module",
-  "workspaces": [
-    "packages/*",
-    "registry",
-    "site"
+  "main": "dist/index.js",
+  "unpkg": "dist/cdn.min.js",
+  "jsdelivr": "dist/cdn.min.js",
+  "exports": {
+    ".": "./dist/index.js",
+    "./collapsible": "./dist/collapsible.js",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist"
   ],
   "scripts": {
-    "test": "bun run --filter crux-ui test",
-    "test:watch": "bun run --filter crux-ui test:watch",
-    "build": "bun run --filter crux-ui build",
-    "dev": "bun run --filter site dev",
-    "registry:build": "bun run --filter crux-registry build",
-    "registry:sync": "node registry/sync-shadcn.mjs fetch",
-    "registry:bake": "node registry/sync-shadcn.mjs bake && prettier --write registry/astro",
-    "format": "prettier --write .",
-    "format:check": "prettier --check .",
+    "build": "node scripts/build.js",
+    "prepublishOnly": "node scripts/build.js",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "lint": "eslint .",
-    "lint:fix": "eslint . --fix"
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  },
+  "keywords": [
+    "alpinejs",
+    "alpine",
+    "headless",
+    "unstyled",
+    "primitives",
+    "accessibility",
+    "aria",
+    "ui",
+    "components",
+    "dialog",
+    "combobox",
+    "tabs",
+    "popover"
+  ],
+  "author": {
+    "name": "Jason Baciulis",
+    "url": "https://x.com/jasonbaciulis"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jasonbaciulis/crux-ui.git"
+  },
+  "homepage": "https://crux-ui.com",
+  "peerDependencies": {
+    "alpinejs": "^3.12.0"
   },
   "devDependencies": {
+    "@alpinejs/collapse": "^3.15.12",
     "@eslint/js": "^10.0.1",
     "@vitest/eslint-plugin": "^1.6.26",
+    "alpinejs": "^3.14.0",
+    "esbuild": "^0.25.0",
     "eslint": "^10.8.0",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-unicorn": "^73.0.0",
     "globals": "^17.9.0",
+    "jsdom": "^25.0.0",
     "prettier": "^3.9.6",
-    "prettier-plugin-astro": "^0.14.1"
+    "vitest": "^3.0.0"
   }
 }
