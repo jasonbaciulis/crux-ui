@@ -34,13 +34,21 @@ Five conventions, uniform across every primitive:
   component; the part name is the directive argument.
 
 ```html
-<div x-accordion>
+<div x-data x-accordion>
   <div x-accordion:item value="…">
     <button x-accordion:trigger>…</button>
     <div x-accordion:panel>…</div>
   </div>
 </div>
 ```
+
+Every standalone root pairs its directive with a bare `x-data` — everything
+in Alpine starts with `x-data`, and it is what Alpine's initial scan
+discovers on server-rendered pages (the scan visits only
+`[x-data]`/`[x-init]` elements; a root without it silently never
+initializes). A root nested under an existing `x-data` ancestor needs no
+`x-data` of its own, but registry templates always ship it on the
+outermost root.
 
 Part names follow Base UI's vocabulary: `trigger`, `item`, `header`,
 `panel` (disclosure family: collapsible, accordion, tabs), `popup` (overlay
@@ -53,7 +61,7 @@ No expressions, no quoting gymnastics — a templating engine can emit these
 directly (`default-value="{{ first_slug }}"`).
 
 ```html
-<div x-accordion multiple default-value="shipping">
+<div x-data x-accordion multiple default-value="shipping">
   <div x-tabs default-value="account" orientation="vertical" activation="manual">
     <div x-popover placement="bottom-start" offset="8"></div>
   </div>
@@ -163,7 +171,7 @@ Per component: `$collapsible` (`isOpen`, `open()`, `close()`, `toggle()`),
 **Events** — kebab-case CustomEvents dispatched from the root, bubbling:
 
 ```html
-<div x-accordion @accordion-change="track($event.detail.value)"></div>
+<div x-data x-accordion @accordion-change="track($event.detail.value)"></div>
 ```
 
 Naming: `<component>-change` for value changes; `<component>-open` /
@@ -194,6 +202,7 @@ rejected as duplicate machinery).
 
 ```html
 <div
+  x-data
   x-accordion
   default-value="shipping"
   class="max-w-lg divide-y divide-gray-200 rounded-lg border"
@@ -250,7 +259,7 @@ removed and visibility taken over (respecting `x-collapse` /
 
 ```html
 <!-- Collapsible: the accordion's little sibling — same parts, boolean state -->
-<div x-collapsible default-open>
+<div x-data x-collapsible default-open>
   <button x-collapsible:trigger class="group/collapsible-trigger">
     Advanced options
     <svg class="group-data-panel-open/collapsible-trigger:rotate-180">…</svg>
@@ -259,7 +268,7 @@ removed and visibility taken over (respecting `x-collapse` /
 </div>
 
 <!-- Tabs: roving tabindex, arrow/Home/End keys, automatic or manual activation -->
-<div x-tabs default-value="account">
+<div x-data x-tabs default-value="account">
   <div x-tabs:list aria-label="Settings" class="flex gap-1 border-b">
     <button x-tabs:tab value="account" class="data-selected:border-b-2">Account</button>
     <button x-tabs:tab value="password">Password</button>
@@ -269,7 +278,7 @@ removed and visibility taken over (respecting `x-collapse` /
 </div>
 
 <!-- Dialog: popup on a native <dialog> → top layer, ::backdrop, no teleport needed -->
-<div x-dialog>
+<div x-data x-dialog>
   <button x-dialog:trigger>Delete account</button>
   <dialog x-dialog:popup class="rounded-lg p-6 backdrop:bg-black/50">
     <h2 x-dialog:title>Are you sure?</h2>
@@ -279,7 +288,7 @@ removed and visibility taken over (respecting `x-collapse` /
 </div>
 
 <!-- Popover: Floating UI positioning via attrs, arrow as a part -->
-<div x-popover placement="bottom-start" offset="8">
+<div x-data x-popover placement="bottom-start" offset="8">
   <button x-popover:trigger>Options</button>
   <div x-popover:popup hidden class="rounded-md border bg-white shadow-md">
     …

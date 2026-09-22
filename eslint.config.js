@@ -6,6 +6,7 @@ import prettier from 'eslint-config-prettier'
 import { defineConfig } from 'eslint/config'
 
 export default defineConfig([
+  { ignores: ['**/dist/**'] },
   js.configs.recommended,
   unicorn.configs.recommended,
   {
@@ -122,7 +123,7 @@ export default defineConfig([
     },
   },
   {
-    files: ['vitest.config.js'],
+    files: ['vitest.config.js', 'scripts/**/*.js'],
     languageOptions: {
       globals: { ...globals.node },
     },

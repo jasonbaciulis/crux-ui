@@ -2,7 +2,7 @@
 
 ## What this is
 
-Crux UI (`crux-ui` on npm) — headless, unstyled, accessible UI primitives for Alpine.js, the "Base UI for AlpineJS". This repo is layer 1 of a three-layer plan (primitives package → shadcn-style component registry → docs site); see `plans/PLAN.md` for the roadmap and decision log. **`API.md` is the v1 API spec** — directive grammar, config attributes, data-attribute styling contract, events, magics, and the build order for upcoming primitives. Read it before adding or changing any primitive. If you have better suggestions, feel free to push back on it.
+Crux UI (`crux-ui` on npm) — headless, unstyled, accessible UI primitives for Alpine.js, the "Base UI for AlpineJS". This repo is the npm package only. The upper layers live in the sibling `crux-ui.com` repo: the Laravel + laradocs docs site, the Blade/Antlers component registry source and its JSON build, and the `crux-ui/statamic` Composer package with the `php artisan crux:add` install command (`packages/crux-ui-statamic`); see `plans/PLAN.md` for the roadmap and decision log and `plans/docs-repo-layout.md` for that repo's layout. **`API.md` is the v1 API spec** — directive grammar, config attributes, data-attribute styling contract, events, magics, and the build order for upcoming primitives. Read it before adding or changing any primitive. If you have better suggestions, feel free to push back on it.
 
 ## Commands
 
@@ -11,10 +11,11 @@ Bun is the package manager (`bun.lock`, CI uses bun); scripts also work with npm
 - `bun install` — install dependencies
 - `bun run test` — run all tests once (vitest, jsdom environment)
 - `bun run test:watch` — vitest watch mode
-- `bunx vitest run tests/collapsible.test.js` — run a single test file
-- `bunx vitest run -t "respects default-open"` — run a single test by name
+- `bun run build` — build the package (esbuild → `dist/`)
 - `bun run lint` / `bun run lint:fix` — ESLint
 - `bun run format` / `bun run format:check` — Prettier
+- `bunx vitest run tests/collapsible.test.js` — run a single test file
+- `bunx vitest run -t "respects default-open"` — run a single test by name
 
 ## Architecture
 
@@ -22,7 +23,7 @@ Each primitive is one module in `src/<name>.js` exporting `(Alpine) => void` tha
 
 The uniform grammar every primitive follows (details in API.md):
 
-- One directive per component; parts are the directive argument (`x-accordion`, `x-accordion:trigger`). Part names follow Base UI vocabulary.
+- One directive per component; parts are the directive argument (`x-accordion`, `x-accordion:trigger`). Part names follow Base UI vocabulary. Root markup always pairs the directive with a bare `x-data` (`<div x-data x-collapsible>`) — Alpine's initial scan visits only `[x-data]`/`[x-init]` elements, so a server-rendered root without it (and without an `x-data` ancestor) silently never initializes (regression-tested in `tests/prerendered-init.test.js`).
 - Static config = plain kebab-case attributes on the root (`default-open`, `multiple`), readable by any server templating engine — no Alpine expressions required.
 - Dynamic control = `x-model` via `x-modelable`; it overrides `default-*` attrs.
 - State out = boolean-presence data-attributes (`data-open` present/absent, never `data-state="…"` values), real ARIA attributes, kebab-case bubbling CustomEvents (`<component>-change` with `detail.value`), and a `$<component>` magic that resolves the nearest root through Alpine's scope chain (not `closest()`).

@@ -48,7 +48,7 @@ const parts = (root) => ({
 // per-test attribute variations.
 async function mountCollapsible({ root = '', panel = 'hidden', trigger = 'button' } = {}) {
   const el = await mount(`
-    <div x-collapsible ${root}>
+    <div x-data x-collapsible ${root}>
       <${trigger} x-collapsible:trigger>Toggle</${trigger}>
       <div x-collapsible:panel ${panel}>Content</div>
     </div>
