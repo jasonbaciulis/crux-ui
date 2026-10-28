@@ -60,6 +60,13 @@ family: popover, dialog, menu, select), `list`, `tab`, `backdrop`, `title`,
 No expressions, no quoting gymnastics — a templating engine can emit these
 directly (`default-value="{{ first_slug }}"`).
 
+Alpine users can also bind any config attribute with an expression
+(`:default-value="openItems"`, `:disabled="locked"`, `:value="faq.slug"`
+inside `x-for`). Crux reads static and bound values the same way, through
+`Alpine.extractProp`, which works before the bind phase. Config is read once
+at init, except `disabled`, which follows changes (Base UI's `disabled` is a
+live prop).
+
 ```html
 <div x-data x-accordion multiple default-value="shipping">
   <div x-tabs default-value="account" orientation="vertical" activation="manual">
@@ -68,11 +75,15 @@ directly (`default-value="{{ first_slug }}"`).
 </div>
 ```
 
-- Boolean options are bare attributes (`multiple`, `default-open`).
-- Multi-value strings are comma-separated (`default-value="a, b"`).
+- Boolean options are bare attributes (`multiple`, `default-open`). Alpine's
+  rule applies: `"false"` is false, so `disabled="false"` does not disable.
+- Multi-value strings are comma-separated (`default-value="a, b"`); a bound
+  value can also be an array (`:default-value="['a', 'b']"`).
 - `disabled` on the root makes the whole component ignore user interaction;
-  on an item/trigger it disables that item — skipped in keyboard navigation,
-  reflected as `aria-disabled` + `data-disabled`.
+  on an accordion item it disables only that item. Disabled parts get
+  `data-disabled`. A native `<button>` trigger gets the `disabled` attribute,
+  so the browser removes it from the Tab order; any other trigger element
+  gets `aria-disabled="true"` and stays focusable.
 - `hidden-until-found` on the root (Base UI's `hiddenUntilFound`): closed
   panels use `hidden="until-found"` so browser find-in-page (Cmd+F) can
   match text inside them — the package listens for `beforematch` and opens
@@ -121,7 +132,7 @@ attributes, not `data-state="…"` values):
 | `data-popup-open`                    | trigger (overlay family)                               | present while its popup is open   |
 | `data-selected` / `data-highlighted` | tab, menu/select item                                  | selection vs. keyboard highlight  |
 | `data-disabled`                      | any part                                               | present when disabled             |
-| `data-index`                         | item, header, panel                                    | item's index in the collection    |
+| `data-index`                         | item, header, trigger, panel                           | item's index in the collection    |
 | `data-orientation`                   | root, list, panel                                      | `horizontal` / `vertical`         |
 
 Since the package also sets the real ARIA attributes (`aria-expanded`,
@@ -290,15 +301,33 @@ one with `group-data-panel-open/accordion-trigger:hidden`, the other with
 `hidden group-data-panel-open/accordion-trigger:inline` — or the
 `group-aria-expanded/accordion-trigger:*` equivalents.)
 
+Accordion behavior follows Base UI. Single mode is the default: opening an
+item closes the open one, and pressing the open item's trigger closes it.
+`multiple` on the root lets several items stay open. An item without a
+`value` gets a generated one. `disabled` on the root disables every item;
+`disabled` on an item disables only that item.
+
 What the package wires up at init, per WAI-ARIA APG: trigger gets
 `aria-expanded`, `aria-controls`, generated `id`, and `data-panel-open`;
 panel gets `role="region"`, `aria-labelledby`, generated `id`; the header
-part is where `role="heading"`/`aria-level` land when the user's element
-isn't already an `<h1>`–`<h6>`; Enter/Space toggle; `data-open`/
-`data-closed` + `data-index` on item, header, and panel; the panel's
+part is where `role="heading"`/`aria-level="3"` land when the user's
+element isn't already an `<h1>`–`<h6>` (Base UI renders the header as
+`<h3>`); Enter/Space toggle; `data-open`/`data-closed` on item, header, and
+panel; `data-disabled` + `data-index` on item, header, trigger, and panel.
+There is no arrow-key navigation between triggers: Base UI removed roving
+focus after the APG update, so Tab moves between triggers. The panel's
 `hidden` is taken over — bound as `hidden="until-found"` under
 `hidden-until-found`, otherwise removed and replaced by `x-show` (respecting
 `x-collapse` / `x-transition`).
+
+The collapsible deliberately wires less. It follows the APG disclosure
+pattern, as Base UI's collapsible does: the trigger gets `aria-expanded` and
+`aria-controls`, and the panel gets only a generated `id`. There is no
+`role="region"` and no `aria-labelledby`, so the trigger needs no generated
+`id`. A collapsible usually reveals a small piece of content inside other
+content, where an extra landmark region only adds noise for screen-reader
+users; an accordion is a set of labelled sections, where a region per panel
+helps navigation.
 
 ## Sketches: how the grammar generalizes
 
@@ -348,14 +377,17 @@ isn't already an `<h1>`–`<h6>`; Enter/Space toggle; `data-open`/
   scope, parts call `$id()` inside it, so `aria-controls`/`aria-labelledby`
   wiring agrees per instance. Existing `id` attributes are respected, never
   overwritten.
-- **Keyboard** — shared list-navigation util (roving tabindex, arrow keys,
-  Home/End, typeahead) used by tabs, menu, select, etc. Each primitive's
-  bindings follow its WAI-ARIA APG pattern, enumerated when built.
+- **Keyboard** — focus movement comes from `@alpinejs/focus`
+  (`$focus.within(…).first()` / `.last()` / `.withWrapAround().next()` /
+  `.prev()`), as in Alpine UI's tabs, not from a custom util. Used by tabs,
+  menu, select, etc. Each primitive's bindings follow its WAI-ARIA APG
+  pattern, enumerated when built.
 - **Dismiss layering** — a shared overlay stack so Escape and outside-click
   close only the topmost open layer (popover inside dialog behaves
   correctly).
-- **Focus** — trap inside modal parts, restore to trigger on close. Core
-  util owned by this package (not delegated to user markup).
+- **Focus** — trap inside modal parts, restore to trigger on close, through
+  `@alpinejs/focus` (`x-trap`) bound by the package (not delegated to user
+  markup).
 - **Positioning** — direct `@floating-ui/dom` dependency (full middleware
   control: offset, flip, shift, size, arrow). `placement` / `offset` attrs
   on the root; `:arrow` part. Open popups expose `--anchor-width` /
@@ -379,21 +411,37 @@ src/
   dialog.js
   …
   core/
-    keynav.js  dismiss.js  focus.js  float.js
+    button.js  config.js  disclosure.js  ids.js  state.js  dismiss.js  float.js
 ```
 
 Core rule: reuse Alpine's own machinery before writing any custom
 mechanism — `x-id`/`$id` for ids, `$dispatch` for events, `$watch` for
-change tracking, `x-modelable` for `x-model`, and `Alpine.bind` for applying
-bindings. Crux ships no animation: user CSS or `x-collapse`/`x-transition`
-animates the parts (see section 5). Custom core utils
-exist only for behavior Alpine has no primitive for (roving focus, dismiss
-layering, focus trap, positioning).
+change tracking, `x-modelable` for `x-model`, `Alpine.extractProp` for
+config attributes, `Alpine.bind` for applying bindings, and
+`@alpinejs/focus` for focus movement and focus trap. Crux ships no
+animation: user CSS or `x-collapse`/`x-transition` animates the parts (see
+section 5). Custom core utils exist only for behavior Alpine and its
+official plugins have no primitive for (dismiss layering, positioning).
 
 Each primitive module exports `(Alpine) => void` registering its directive +
 magic. The default plugin registers all; per-primitive entries exist for
 bundle-conscious users. `alpinejs ^3.0.0` stays a peer dependency;
 `@floating-ui/dom` becomes a real dependency once popover lands.
+
+`@alpinejs/focus` becomes a real dependency once tabs land, so users have
+nothing extra to install or register:
+
+- A caret range (`^3.x`), so package managers install one copy shared with
+  a user's own `@alpinejs/focus`.
+- Only the primitives that need it (tabs, dialog, menu, …) call
+  `Alpine.plugin(focus)` in their own module, so per-primitive entries work
+  alone and `crux-ui/collapsible` / `crux-ui/accordion` do not load it.
+- Registering it twice is safe: `Alpine.directive` and `Alpine.magic` store
+  handlers in a map, so a second registration replaces the first. A test
+  covers a user who also registers the plugin.
+- Side effect: `$focus` and `x-trap` become available to the whole page.
+- The CDN build bundles it (about 9 KB gzipped); a CDN user who also loads
+  the plugin's own script downloads it twice, without errors.
 
 ## No-JS / pre-init behavior
 
