@@ -1,13 +1,14 @@
 {
   "name": "crux-ui",
-  "version": "0.0.1",
-  "description": "Crux UI \u2014 headless, unstyled, accessible UI primitives for Alpine.js.",
+  "version": "0.1.0",
+  "description": "Crux UI — headless, unstyled, accessible UI primitives for Alpine.js.",
   "type": "module",
   "main": "dist/index.js",
   "unpkg": "dist/cdn.min.js",
   "jsdelivr": "dist/cdn.min.js",
   "exports": {
     ".": "./dist/index.js",
+    "./accordion": "./dist/accordion.js",
     "./collapsible": "./dist/collapsible.js",
     "./package.json": "./package.json"
   },

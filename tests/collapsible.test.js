@@ -1,25 +1,7 @@
 import Alpine from 'alpinejs'
 import collapse from '@alpinejs/collapse'
 import Crux from '../src/index.js'
-
-// Alpine picks up injected markup via MutationObserver; a macrotask
-// guarantees init has run.
-const flush = () =>
-  new Promise((resolve) => {
-    setTimeout(resolve, 0)
-  })
-const animationFrame = () =>
-  new Promise((resolve) => {
-    requestAnimationFrame(() => resolve())
-  })
-
-// Alpine applies x-show display changes on the next animation frame, so
-// assertions about a toggled panel's display need to settle through one.
-const settle = async () => {
-  await flush()
-  await animationFrame()
-  await flush()
-}
+import { flush, mount, settle } from './helpers.js'
 
 beforeAll(() => {
   window.Alpine = Alpine
@@ -27,17 +9,6 @@ beforeAll(() => {
   Alpine.plugin(Crux)
   Alpine.start()
 })
-
-afterEach(async () => {
-  document.body.replaceChildren()
-  await flush()
-})
-
-async function mount(html) {
-  document.body.innerHTML = html
-  await flush()
-  return document.body.firstElementChild
-}
 
 const parts = (root) => ({
   trigger: root.querySelector(String.raw`[x-collapsible\:trigger]`),
@@ -222,6 +193,47 @@ describe('x-collapsible', () => {
     trigger.click()
     await flush()
     expect(root.hasAttribute('data-user-open')).toBe(true)
+  })
+
+  it('reads default-open bound with an Alpine expression', async () => {
+    const el = await mount(`
+      <div x-data="{ startOpen: true }">
+        <div x-collapsible :default-open="startOpen">
+          <button x-collapsible:trigger>Toggle</button>
+          <div x-collapsible:panel hidden>Content</div>
+        </div>
+      </div>
+    `)
+
+    expect(parts(el).trigger.getAttribute('aria-expanded')).toBe('true')
+  })
+
+  it('reads "false" as false for boolean config', async () => {
+    const { trigger } = await mountCollapsible({ root: 'default-open="false" disabled="false"' })
+
+    expect(trigger.getAttribute('aria-expanded')).toBe('false')
+    expect(trigger.disabled).toBe(false)
+  })
+
+  it('follows a bound disabled', async () => {
+    const el = await mount(`
+      <div x-data="{ locked: true }">
+        <div x-collapsible :disabled="locked">
+          <button x-collapsible:trigger>Toggle</button>
+          <div x-collapsible:panel hidden>Content</div>
+        </div>
+      </div>
+    `)
+    const collapsible = el.querySelector('[x-collapsible]')
+    const { trigger } = parts(el)
+
+    expect(trigger.disabled).toBe(true)
+    expect(collapsible.hasAttribute('data-disabled')).toBe(true)
+
+    Alpine.$data(el).locked = false
+    await flush()
+    expect(trigger.disabled).toBe(false)
+    expect(collapsible.hasAttribute('data-disabled')).toBe(false)
   })
 
   it('honors disabled', async () => {
