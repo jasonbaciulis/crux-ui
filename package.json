@@ -8,6 +8,7 @@
   "jsdelivr": "dist/cdn.min.js",
   "exports": {
     ".": "./dist/index.js",
+    "./accordion": "./dist/accordion.js",
     "./collapsible": "./dist/collapsible.js",
     "./package.json": "./package.json"
   },
