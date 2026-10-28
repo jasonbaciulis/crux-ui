@@ -152,7 +152,7 @@ Alpine boots, with no layout shift.
 **CSS variables** — open panels expose their measured size for any CSS that
 wants it, named per component to match Base UI: `--collapsible-panel-height`
 / `-width`, `--accordion-panel-height` / `-width`. Animation itself is
-handled by Alpine's own `x-collapse` / `x-transition` (see below) — the
+user CSS or Alpine's own `x-collapse` / `x-transition` (see below) — the
 variables are informational, not an animation mechanism.
 
 **Magics** (the logic API — resolve the nearest root from the element they're
@@ -193,10 +193,44 @@ compose naturally:
 <div x-accordion:panel x-collapse hidden>…</div>
 ```
 
-Alpine's transition plugins are the one and only animation mechanism —
-Crux deliberately ships none of its own (Base UI's
+Crux deliberately ships no animation mechanism of its own (Base UI's
 `data-starting-style`/`data-ending-style` CSS hooks were considered and
-rejected as duplicate machinery).
+rejected as duplicate machinery). Animation is user CSS or Alpine's
+transition plugins.
+
+**Recipe: CSS-only panel height animation.** The recommended way to animate
+disclosure panels. It needs `hidden-until-found` on the root: a panel that
+is hidden until found keeps its box, so its height can transition. (An
+`x-show` panel has no box while closed; opening it would need
+`@starting-style`, which also animates default-open panels on page load.)
+Put padding on an inner wrapper — padding on the panel itself jumps while
+the height transitions.
+
+```css
+.panel {
+  overflow: clip;
+  /* Keeps focus rings near the panel edge visible. */
+  overflow-clip-margin: 0.5rem;
+  interpolate-size: allow-keywords;
+  transition:
+    height 200ms,
+    content-visibility 200ms allow-discrete;
+}
+
+.panel[data-closed] {
+  height: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .panel {
+    transition: none;
+  }
+}
+```
+
+Browsers without `interpolate-size` or `hidden="until-found"` open and close
+the panel without animation. A panel without `hidden-until-found` uses
+`x-collapse` instead, as above.
 
 ## Full example: accordion
 
@@ -205,6 +239,7 @@ rejected as duplicate machinery).
   x-data
   x-accordion
   default-value="shipping"
+  hidden-until-found
   class="max-w-lg divide-y divide-gray-200 rounded-lg border"
 >
   <div x-accordion:item value="shipping" class="p-4">
@@ -227,8 +262,13 @@ rejected as duplicate machinery).
         </svg>
       </button>
     </h3>
-    <div x-accordion:panel x-collapse hidden class="pb-3 pt-1 text-sm text-gray-600">
-      We offer standard (5-7 days), express (2-3 days), and overnight shipping.
+    <div
+      x-accordion:panel
+      class="overflow-clip transition-[height,content-visibility] transition-discrete duration-200 motion-reduce:transition-none data-closed:h-0 [interpolate-size:allow-keywords] [overflow-clip-margin:0.5rem]"
+    >
+      <div class="pb-3 pt-1 text-sm text-gray-600">
+        We offer standard (5-7 days), express (2-3 days), and overnight shipping.
+      </div>
     </div>
   </div>
 
@@ -236,10 +276,14 @@ rejected as duplicate machinery).
     <h3 x-accordion:header class="flex">
       <button x-accordion:trigger class="…">What is your return policy?</button>
     </h3>
-    <div x-accordion:panel x-collapse hidden class="…">Returns accepted within 30 days.</div>
+    <div x-accordion:panel hidden="until-found" class="…">
+      <div class="…">Returns accepted within 30 days.</div>
+    </div>
   </div>
 </div>
 ```
+
+The shipping panel is open by default, so it ships without `hidden`.
 
 (shadcn's two-icon variant works the same way: two svgs inside the trigger,
 one with `group-data-panel-open/accordion-trigger:hidden`, the other with
@@ -251,9 +295,10 @@ What the package wires up at init, per WAI-ARIA APG: trigger gets
 panel gets `role="region"`, `aria-labelledby`, generated `id`; the header
 part is where `role="heading"`/`aria-level` land when the user's element
 isn't already an `<h1>`–`<h6>`; Enter/Space toggle; `data-open`/
-`data-closed` + `data-index` on item, header, and panel; `hidden` is
-removed and visibility taken over (respecting `x-collapse` /
-`x-transition`).
+`data-closed` + `data-index` on item, header, and panel; the panel's
+`hidden` is taken over — bound as `hidden="until-found"` under
+`hidden-until-found`, otherwise removed and replaced by `x-show` (respecting
+`x-collapse` / `x-transition`).
 
 ## Sketches: how the grammar generalizes
 
@@ -264,7 +309,7 @@ removed and visibility taken over (respecting `x-collapse` /
     Advanced options
     <svg class="group-data-panel-open/collapsible-trigger:rotate-180">…</svg>
   </button>
-  <div x-collapsible:panel x-collapse>…</div>
+  <div x-collapsible:panel>…</div>
 </div>
 
 <!-- Tabs: roving tabindex, arrow/Home/End keys, automatic or manual activation -->
@@ -339,8 +384,9 @@ src/
 
 Core rule: reuse Alpine's own machinery before writing any custom
 mechanism — `x-id`/`$id` for ids, `$dispatch` for events, `$watch` for
-change tracking, `x-modelable` for `x-model`, `Alpine.bind` for applying
-bindings, and `x-collapse`/`x-transition` for animation. Custom core utils
+change tracking, `x-modelable` for `x-model`, and `Alpine.bind` for applying
+bindings. Crux ships no animation: user CSS or `x-collapse`/`x-transition`
+animates the parts (see section 5). Custom core utils
 exist only for behavior Alpine has no primitive for (roving focus, dismiss
 layering, focus trap, positioning).
 

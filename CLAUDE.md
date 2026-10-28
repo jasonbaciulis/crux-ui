@@ -19,7 +19,7 @@ Bun is the package manager (`bun.lock`, CI uses bun); scripts also work with npm
 
 ## Architecture
 
-Each primitive is one module in `src/<name>.js` exporting `(Alpine) => void` that registers one directive + one magic. `src/index.js` is the default plugin registering all primitives; per-primitive entries are exposed via package.json `exports` for bundle-conscious users. Shared behavior with no Alpine primitive (roving focus, dismiss layering, focus trap, Floating UI positioning) will live in `src/core/` — everything else must reuse Alpine's own machinery: `x-id`/`$id` for ids, `$dispatch` for events, `$watch` for change tracking, `x-modelable` for `x-model`, `Alpine.bind` for applying bindings, `x-collapse`/`x-transition` for animation (Crux ships no animation of its own).
+Each primitive is one module in `src/<name>.js` exporting `(Alpine) => void` that registers one directive + one magic. `src/index.js` is the default plugin registering all primitives; per-primitive entries are exposed via package.json `exports` for bundle-conscious users. Shared behavior with no Alpine primitive (roving focus, dismiss layering, focus trap, Floating UI positioning) will live in `src/core/` — everything else must reuse Alpine's own machinery: `x-id`/`$id` for ids, `$dispatch` for events, `$watch` for change tracking, `x-modelable` for `x-model`, `Alpine.bind` for applying bindings. Crux ships no animation of its own: user CSS (the panel recipe in API.md section 5) or `x-collapse`/`x-transition` animates the parts.
 
 The uniform grammar every primitive follows (details in API.md):
 
